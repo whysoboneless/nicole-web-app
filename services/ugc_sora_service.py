@@ -44,12 +44,13 @@ class UGCSoraService:
     """
     
     def __init__(self):
-        # Load API keys from environment variables
-        load_dotenv()
-        
+        # Load from environment variables
         self.kie_ai_key = os.environ.get('KIE_AI_API_KEY', '')
         self.gemini_api_key = os.environ.get('GOOGLE_GENERATIVEAI_API_KEY', '')
         self.openai_api_key = os.environ.get('OPENAI_API_KEY', '')
+        
+        # Try to override with env if available
+        load_dotenv()
         env_kie = os.environ.get('KIE_AI_API_KEY')
         env_gemini = os.environ.get('GOOGLE_GENERATIVEAI_API_KEY')
         env_openai = os.environ.get('OPENAI_API_KEY')
