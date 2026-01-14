@@ -1,0 +1,962 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Video Editor - Nicole AI{% endblock %}
+
+{% block page_title %}Video Editor{% endblock %}
+{% block page_description %}Create autonomous VFX templates and generate professional videos automatically{% endblock %}
+
+{% block extra_head %}
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .gradient-text {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .template-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .template-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .template-card:hover::before {
+        left: 100%;
+    }
+    
+    .template-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15);
+    }
+    
+    .tab-active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .tab-inactive {
+        background: rgba(255, 255, 255, 0.8);
+        color: #6b7280;
+        border: 1px solid rgba(107, 114, 128, 0.2);
+    }
+    
+    .tab-inactive:hover {
+        background: rgba(255, 255, 255, 0.95);
+        color: #374151;
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .feature-highlight {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+    
+    .pulse-glow {
+        animation: pulse-glow 2s infinite;
+    }
+    
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.3); }
+        50% { box-shadow: 0 0 30px rgba(102, 126, 234, 0.5); }
+    }
+    
+    .coming-soon-overlay {
+        background: linear-gradient(45deg, rgba(102, 126, 234, 0.9), rgba(118, 75, 162, 0.9));
+        backdrop-filter: blur(10px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div x-data="videoEditorPage()" x-init="init()">
+    <!-- Hero Section -->
+    <div class="relative overflow-hidden mb-12">
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-pink-500/5"></div>
+        <div class="relative max-w-7xl mx-auto px-6 py-16">
+            <div class="text-center mb-8">
+                <h1 class="text-5xl font-black text-gray-900 mb-4">
+                    🎬 <span class="gradient-text">Video Editor</span>
+                </h1>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+                    Create stunning VFX templates once, then generate unlimited professional videos automatically with AI-powered content sourcing.
+                </p>
+                
+                <!-- Key Features -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                    <div class="glass-card rounded-xl p-6 feature-highlight">
+                        <div class="text-3xl mb-3">🎨</div>
+                        <h3 class="font-bold text-gray-900 mb-2">VFX Templates</h3>
+                        <p class="text-sm text-gray-600">Design once, use forever</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-6 feature-highlight">
+                        <div class="text-3xl mb-3">🤖</div>
+                        <h3 class="font-bold text-gray-900 mb-2">AI Content</h3>
+                        <p class="text-sm text-gray-600">Auto news clips & B-roll</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-6 feature-highlight">
+                        <div class="text-3xl mb-3">⚡</div>
+                        <h3 class="font-bold text-gray-900 mb-2">Full Automation</h3>
+                        <p class="text-sm text-gray-600">Zero manual editing</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="max-w-7xl mx-auto px-6 mb-8">
+        <div class="flex flex-wrap gap-4 justify-center">
+            <button @click="activeTab = 'templates'" 
+                    :class="activeTab === 'templates' ? 'tab-active' : 'tab-inactive'"
+                    class="px-6 py-3 rounded-xl font-semibold transition-all">
+                📚 Templates
+            </button>
+            <button @click="activeTab = 'editor'" 
+                    :class="activeTab === 'editor' ? 'tab-active' : 'tab-inactive'"
+                    class="px-6 py-3 rounded-xl font-semibold transition-all">
+                🎨 Visual Editor
+            </button>
+            <button @click="activeTab = 'auto-generate'" 
+                    :class="activeTab === 'auto-generate' ? 'tab-active' : 'tab-inactive'"
+                    class="px-6 py-3 rounded-xl font-semibold transition-all">
+                🤖 Auto-Generate
+            </button>
+            <button @click="activeTab = 'studio'" 
+                    :class="activeTab === 'studio' ? 'tab-active' : 'tab-inactive'"
+                    class="px-6 py-3 rounded-xl font-semibold transition-all">
+                📊 Video Studio
+            </button>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="max-w-7xl mx-auto px-6">
+        
+        <!-- VFX Templates Tab -->
+        <div x-show="activeTab === 'templates'" class="space-y-8">
+            <!-- Template Gallery Header -->
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">VFX Template Gallery</h2>
+                    <p class="text-gray-600">Choose a style or create your own custom template</p>
+                </div>
+                <button @click="activeTab = 'editor'" class="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
+                    🎨 Open Visual Editor
+                </button>
+            </div>
+
+            <!-- Template Categories -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- News Style Template -->
+                <div class="template-card glass-card rounded-2xl p-6 cursor-pointer">
+                    <div class="relative">
+                        <div class="w-full h-40 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl mb-4 flex items-center justify-center">
+                            <div class="text-white text-center">
+                                <div class="text-3xl mb-2">📺</div>
+                                <div class="text-sm font-medium">News Preview</div>
+                            </div>
+                        </div>
+                        <div class="absolute top-2 right-2 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                            Ready
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">📰 News Style</h3>
+                    <p class="text-sm text-gray-600 mb-4">Professional news layout with lower thirds, tickers, and clean typography</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-500">Updated 2 days ago</span>
+                        <button class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors">
+                            Use Template
+                        </button>
+                    </div>
+                </div>
+
+                <!-- AI Story Template -->
+                <div class="template-card glass-card rounded-2xl p-6 cursor-pointer">
+                    <div class="relative">
+                        <div class="w-full h-40 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl mb-4 flex items-center justify-center">
+                            <div class="text-white text-center">
+                                <div class="text-3xl mb-2">🤖</div>
+                                <div class="text-sm font-medium">AI Preview</div>
+                            </div>
+                        </div>
+                        <div class="absolute top-2 right-2 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                            Ready
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">🎥 AI Story Style</h3>
+                    <p class="text-sm text-gray-600 mb-4">Cinematic AI-generated videos with dynamic captions and smooth transitions</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-500">Updated 1 day ago</span>
+                        <button class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200 transition-colors">
+                            Use Template
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Documentary Template -->
+                <div class="template-card glass-card rounded-2xl p-6 cursor-pointer">
+                    <div class="relative">
+                        <div class="w-full h-40 bg-gradient-to-br from-green-500 to-green-600 rounded-xl mb-4 flex items-center justify-center">
+                            <div class="text-white text-center">
+                                <div class="text-3xl mb-2">📊</div>
+                                <div class="text-sm font-medium">Doc Preview</div>
+                            </div>
+                        </div>
+                        <div class="absolute top-2 right-2 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                            Ready
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">🎬 Documentary Style</h3>
+                    <p class="text-sm text-gray-600 mb-4">Academic style with charts, screenshots, and expert commentary integration</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-500">Updated 3 days ago</span>
+                        <button class="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors">
+                            Use Template
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Custom Template (Coming Soon) -->
+                <div class="template-card glass-card rounded-2xl p-6 cursor-pointer relative">
+                    <div class="relative">
+                        <div class="w-full h-40 bg-gradient-to-br from-gray-400 to-gray-500 rounded-xl mb-4 flex items-center justify-center">
+                            <div class="text-white text-center">
+                                <div class="text-3xl mb-2">🛠️</div>
+                                <div class="text-sm font-medium">Visual Editor</div>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">✨ Custom Designer</h3>
+                    <p class="text-sm text-gray-600 mb-4">Drag-and-drop visual editor for creating completely custom VFX templates</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-500">Coming very soon</span>
+                        <button class="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium cursor-not-allowed">
+                            Coming Soon
+                        </button>
+                    </div>
+                    
+                    <!-- Coming Soon Overlay -->
+                    <div class="absolute inset-0 coming-soon-overlay rounded-2xl flex items-center justify-center">
+                        <div class="text-center text-white">
+                            <div class="text-2xl mb-2">🚧</div>
+                            <div class="font-bold">Visual Editor</div>
+                            <div class="text-sm opacity-90">In Development</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Editor Tab -->
+        <div x-show="activeTab === 'editor'" class="h-screen bg-gray-900 text-white">
+            <!-- Top Toolbar -->
+            <div class="bg-gray-800 border-b border-gray-700 px-4 py-2 flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <h2 class="text-lg font-bold text-white">🎬 VFX Template Editor</h2>
+                    <div class="flex items-center space-x-2 text-sm text-gray-300">
+                        <span>Template:</span>
+                        <select class="bg-gray-700 text-white px-3 py-1 rounded text-sm">
+                            <option>News Style</option>
+                            <option>AI Story</option>
+                            <option>Documentary</option>
+                            <option>+ New Template</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button class="px-3 py-1 bg-gray-700 text-white rounded text-sm hover:bg-gray-600 transition-all">
+                        💾 Save
+                    </button>
+                    <button class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-all">
+                        ▶️ Preview
+                    </button>
+                    <button class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-all">
+                        🚀 Deploy
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Editor Layout -->
+            <div class="flex h-full">
+                <!-- Left Panel - Asset Library -->
+                <div class="w-64 bg-gray-800 border-r border-gray-700 overflow-y-auto">
+                    <div class="p-4">
+                        <h3 class="text-sm font-semibold text-gray-300 mb-3">MEDIA LIBRARY</h3>
+                        
+                        <!-- Asset Categories -->
+                        <div class="space-y-3">
+                            <div>
+                                <div class="text-xs font-medium text-gray-400 mb-2">TEXT ELEMENTS</div>
+                                <div class="space-y-1">
+                                    <div class="asset-item p-2 bg-gray-700 rounded cursor-grab hover:bg-gray-600 transition-all" 
+                                         draggable="true" data-asset="title-card">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-sm">📋</span>
+                                            <span class="text-xs text-white">Title Card</span>
+                                        </div>
+                                    </div>
+                                    <div class="asset-item p-2 bg-gray-700 rounded cursor-grab hover:bg-gray-600 transition-all" 
+                                         draggable="true" data-asset="lower-third">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-sm">📝</span>
+                                            <span class="text-xs text-white">Lower Third</span>
+                                        </div>
+                                    </div>
+                                    <div class="asset-item p-2 bg-gray-700 rounded cursor-grab hover:bg-gray-600 transition-all" 
+                                         draggable="true" data-asset="captions">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-sm">💬</span>
+                                            <span class="text-xs text-white">Auto Captions</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="text-xs font-medium text-gray-400 mb-2">MEDIA SLOTS</div>
+                                <div class="space-y-1">
+                                    <div class="asset-item p-2 bg-gray-700 rounded cursor-grab hover:bg-gray-600 transition-all" 
+                                         draggable="true" data-asset="broll-slot">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-sm">🎬</span>
+                                            <span class="text-xs text-white">B-Roll Slot</span>
+                                        </div>
+                                    </div>
+                                    <div class="asset-item p-2 bg-gray-700 rounded cursor-grab hover:bg-gray-600 transition-all" 
+                                         draggable="true" data-asset="news-clip">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-sm">📺</span>
+                                            <span class="text-xs text-white">News Clip</span>
+                                        </div>
+                                    </div>
+                                    <div class="asset-item p-2 bg-gray-700 rounded cursor-grab hover:bg-gray-600 transition-all" 
+                                         draggable="true" data-asset="ai-video">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-sm">🤖</span>
+                                            <span class="text-xs text-white">AI Video</span>
+                                        </div>
+                                    </div>
+                                    <div class="asset-item p-2 bg-gray-700 rounded cursor-grab hover:bg-gray-600 transition-all" 
+                                         draggable="true" data-asset="sponsor-slot">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-sm">💼</span>
+                                            <span class="text-xs text-white">Sponsor Slot</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="text-xs font-medium text-gray-400 mb-2">EFFECTS</div>
+                                <div class="space-y-1">
+                                    <div class="asset-item p-2 bg-gray-700 rounded cursor-grab hover:bg-gray-600 transition-all" 
+                                         draggable="true" data-asset="transition">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-sm">✨</span>
+                                            <span class="text-xs text-white">Transition</span>
+                                        </div>
+                                    </div>
+                                    <div class="asset-item p-2 bg-gray-700 rounded cursor-grab hover:bg-gray-600 transition-all" 
+                                         draggable="true" data-asset="overlay">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-sm">🎨</span>
+                                            <span class="text-xs text-white">Brand Overlay</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center - Preview & Timeline -->
+                <div class="flex-1 flex flex-col">
+                    <!-- Preview Area -->
+                    <div class="flex-1 bg-black p-4 flex items-center justify-center">
+                        <div class="relative">
+                            <!-- 16:9 Video Preview -->
+                            <div class="w-[640px] h-[360px] bg-gray-900 rounded-lg border-2 border-gray-600 relative overflow-hidden">
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="text-center text-white">
+                                        <div class="text-4xl mb-2">🎬</div>
+                                        <div class="text-lg font-medium">Video Preview</div>
+                                        <div class="text-sm opacity-75">Real-time Remotion render</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Overlay Grid for Positioning -->
+                                <div class="absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-20">
+                                    <div class="border border-gray-500"></div>
+                                    <div class="border border-gray-500"></div>
+                                    <div class="border border-gray-500"></div>
+                                    <div class="border border-gray-500"></div>
+                                    <div class="border border-gray-500"></div>
+                                    <div class="border border-gray-500"></div>
+                                    <div class="border border-gray-500"></div>
+                                    <div class="border border-gray-500"></div>
+                                    <div class="border border-gray-500"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Playback Controls -->
+                            <div class="mt-4 flex items-center justify-center space-x-4">
+                                <button class="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center hover:bg-gray-600 transition-all">
+                                    ⏮️
+                                </button>
+                                <button class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition-all">
+                                    ▶️
+                                </button>
+                                <button class="w-8 h-8 bg-gray-700 text-white rounded-full flex items-center justify-center hover:bg-gray-600 transition-all">
+                                    ⏭️
+                                </button>
+                                <div class="text-white text-sm font-mono ml-4">00:00 / 00:30</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline Section -->
+                    <div class="h-64 bg-gray-800 border-t border-gray-700">
+                        <!-- Timeline Header -->
+                        <div class="flex items-center justify-between px-4 py-2 border-b border-gray-700">
+                            <div class="flex items-center space-x-4">
+                                <h3 class="text-sm font-semibold text-white">TIMELINE</h3>
+                                <div class="flex items-center space-x-2 text-xs text-gray-400">
+                                    <span>Duration: 30s</span>
+                                    <span>•</span>
+                                    <span>FPS: 30</span>
+                                    <span>•</span>
+                                    <span>1920x1080</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button class="px-2 py-1 bg-gray-700 text-white rounded text-xs hover:bg-gray-600">
+                                    Zoom Fit
+                                </button>
+                                <input type="range" class="w-24" min="10" max="200" value="100">
+                            </div>
+                        </div>
+
+                        <!-- Timeline Ruler -->
+                        <div class="px-4 py-2 border-b border-gray-700">
+                            <div class="flex text-xs text-gray-400 relative">
+                                <div class="w-16 text-center">0:00</div>
+                                <div class="w-16 text-center">0:05</div>
+                                <div class="w-16 text-center">0:10</div>
+                                <div class="w-16 text-center">0:15</div>
+                                <div class="w-16 text-center">0:20</div>
+                                <div class="w-16 text-center">0:25</div>
+                                <div class="w-16 text-center">0:30</div>
+                                <!-- Playhead -->
+                                <div class="absolute top-0 left-0 w-0.5 h-6 bg-red-500"></div>
+                            </div>
+                        </div>
+
+                        <!-- Timeline Tracks -->
+                        <div class="flex-1 overflow-y-auto">
+                            <div class="space-y-1 p-2">
+                                <!-- Video Track 1 -->
+                                <div class="timeline-track flex items-center">
+                                    <div class="w-16 text-xs font-medium text-gray-300 px-2">V1</div>
+                                    <div class="flex-1 h-12 bg-gray-700 rounded timeline-drop-zone relative" 
+                                         data-track="video1">
+                                        <div class="absolute inset-0 flex items-center justify-center text-gray-500 text-xs">
+                                            Drop video here
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Audio Track -->
+                                <div class="timeline-track flex items-center">
+                                    <div class="w-16 text-xs font-medium text-gray-300 px-2">A1</div>
+                                    <div class="flex-1 h-8 bg-green-800 rounded timeline-drop-zone relative" 
+                                         data-track="audio1">
+                                        <div class="absolute inset-0 flex items-center justify-center text-green-300 text-xs">
+                                            🎤 Voice-over
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Text Track -->
+                                <div class="timeline-track flex items-center">
+                                    <div class="w-16 text-xs font-medium text-gray-300 px-2">T1</div>
+                                    <div class="flex-1 h-8 bg-purple-800 rounded timeline-drop-zone relative" 
+                                         data-track="text1">
+                                        <div class="absolute inset-0 flex items-center justify-center text-purple-300 text-xs">
+                                            Text overlays
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Effects Track -->
+                                <div class="timeline-track flex items-center">
+                                    <div class="w-16 text-xs font-medium text-gray-300 px-2">FX1</div>
+                                    <div class="flex-1 h-8 bg-yellow-800 rounded timeline-drop-zone relative" 
+                                         data-track="effects1">
+                                        <div class="absolute inset-0 flex items-center justify-center text-yellow-300 text-xs">
+                                            Effects & transitions
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Properties -->
+                <div class="w-80 bg-gray-800 border-l border-gray-700 overflow-y-auto">
+                    <div class="p-4">
+                        <h3 class="text-sm font-semibold text-gray-300 mb-4">PROPERTIES</h3>
+                        
+                        <div id="editor-properties-panel">
+                            <div class="text-center text-gray-500 py-8">
+                                <div class="text-3xl mb-2">🎯</div>
+                                <div class="text-sm">Select an element to edit its properties</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto-Generate Tab -->
+        <div x-show="activeTab === 'auto-generate'" class="space-y-8">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">🤖 Autonomous Video Generation</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Select your campaign content and template style. AI will automatically source relevant footage, 
+                    sync timing, and render professional videos.
+                </p>
+            </div>
+
+            <!-- Quick Generate Section -->
+            <div class="glass-card rounded-2xl p-8 pulse-glow">
+                <div class="max-w-3xl mx-auto">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6 text-center">Generate Videos from Existing Content</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-3">Select Campaign</label>
+                            <select class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                                <option>Crypto Empire Campaign</option>
+                                <option>AI News Weekly</option>
+                                <option>Tech Stock Analysis</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-3">VFX Template</label>
+                            <select class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                                <option>📰 News Style</option>
+                                <option>🤖 AI Story Style</option>
+                                <option>🎬 Documentary Style</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">Sponsor Clip (Optional)</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-indigo-400 transition-colors cursor-pointer">
+                            <div class="text-2xl mb-2">📁</div>
+                            <p class="text-gray-600 font-medium">Upload your sponsor video clip</p>
+                            <p class="text-sm text-gray-500 mt-1">MP4, MOV, AVI up to 100MB</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 text-center">
+                        <button class="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-bold text-lg hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
+                            🚀 Generate All Videos Automatically
+                        </button>
+                        <p class="text-sm text-gray-500 mt-2">Estimated time: 5-10 minutes per video</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Preview -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass-card rounded-xl p-6">
+                    <h4 class="font-bold text-gray-900 mb-4">🎯 What AI Will Do</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                            <span class="text-sm text-gray-700">Find relevant news clips & B-roll</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                            <span class="text-sm text-gray-700">Generate data visualizations & charts</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                            <span class="text-sm text-gray-700">Sync timing to voice-over perfectly</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                            <span class="text-sm text-gray-700">Add captions & text overlays</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                            <span class="text-sm text-gray-700">Insert sponsor clips naturally</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                            <span class="text-sm text-gray-700">Apply your VFX template styling</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl p-6">
+                    <h4 class="font-bold text-gray-900 mb-4">📊 Expected Output</h4>
+                    <div class="space-y-4">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-sm font-medium text-gray-900 mb-1">5 Professional Videos</div>
+                            <div class="text-xs text-gray-600">Ready for YouTube upload</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-sm font-medium text-gray-900 mb-1">Auto-Generated Captions</div>
+                            <div class="text-xs text-gray-600">Styled to match your template</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-sm font-medium text-gray-900 mb-1">Consistent Branding</div>
+                            <div class="text-xs text-gray-600">Your VFX style applied throughout</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="text-sm font-medium text-gray-900 mb-1">Optimized Quality</div>
+                            <div class="text-xs text-gray-600">1080p, perfect for all platforms</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Studio Tab -->
+        <div x-show="activeTab === 'studio'" class="space-y-8">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">📊 Video Studio</h2>
+                <p class="text-lg text-gray-600">Monitor rendering, manage assets, and review your generated videos</p>
+            </div>
+
+            <!-- Studio Dashboard Coming Soon -->
+            <div class="glass-card rounded-2xl p-12 text-center">
+                <div class="max-w-md mx-auto">
+                    <div class="text-6xl mb-6">🏗️</div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Studio Dashboard</h3>
+                    <p class="text-gray-600 mb-6">
+                        Complete video management dashboard with render queue, asset library, 
+                        and analytics will be available soon.
+                    </p>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium">Render Queue</div>
+                            <div class="text-gray-500">Progress tracking</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium">Asset Library</div>
+                            <div class="text-gray-500">Media management</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium">Analytics</div>
+                            <div class="text-gray-500">Performance metrics</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium">Export Tools</div>
+                            <div class="text-gray-500">Multi-platform</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div x-show="activeTab === 'settings'" class="space-y-8">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">⚙️ Video Editor Settings</h2>
+                <p class="text-lg text-gray-600">Configure rendering preferences and content sourcing</p>
+            </div>
+
+            <!-- Settings Coming Soon -->
+            <div class="glass-card rounded-2xl p-12 text-center">
+                <div class="max-w-md mx-auto">
+                    <div class="text-6xl mb-6">🔧</div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Advanced Settings</h3>
+                    <p class="text-gray-600 mb-6">
+                        Configure AI content preferences, quality settings, 
+                        and integration options.
+                    </p>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium">Quality Settings</div>
+                            <div class="text-gray-500">4K, 1080p, 720p</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium">Content Sources</div>
+                            <div class="text-gray-500">News APIs, stock</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium">Branding</div>
+                            <div class="text-gray-500">Logo, colors, fonts</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="font-medium">Integrations</div>
+                            <div class="text-gray-500">YouTube, cloud storage</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function videoEditorPage() {
+    return {
+        activeTab: 'templates',
+        timeline: {
+            video: [],
+            audio: [],
+            text: [],
+            effects: []
+        },
+        selectedComponent: null,
+        
+        init() {
+            console.log('Video Editor initialized');
+            this.setupDragAndDrop();
+        },
+        
+        setupDragAndDrop() {
+            // Setup drag events for asset items
+            document.querySelectorAll('.asset-item').forEach(item => {
+                item.addEventListener('dragstart', (e) => {
+                    const assetType = e.target.dataset.asset;
+                    e.dataTransfer.setData('text/plain', assetType);
+                    e.target.style.opacity = '0.5';
+                });
+                
+                item.addEventListener('dragend', (e) => {
+                    e.target.style.opacity = '1';
+                });
+            });
+            
+            // Setup drop zones
+            document.querySelectorAll('.timeline-drop-zone').forEach(zone => {
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    zone.style.border = '2px solid #3B82F6';
+                    zone.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                });
+                
+                zone.addEventListener('dragleave', (e) => {
+                    zone.style.border = '';
+                    zone.style.backgroundColor = '';
+                });
+                
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const assetType = e.dataTransfer.getData('text/plain');
+                    const trackType = zone.dataset.track;
+                    
+                    this.addAssetToTimeline(assetType, trackType, zone);
+                    
+                    zone.style.border = '';
+                    zone.style.backgroundColor = '';
+                });
+            });
+        },
+        
+        addAssetToTimeline(assetType, trackType, zone) {
+            // Create timeline element
+            const element = document.createElement('div');
+            element.className = 'timeline-element bg-blue-600 text-white rounded p-1 m-0.5 cursor-pointer text-xs';
+            element.style.width = '80px';
+            element.style.display = 'inline-block';
+            element.dataset.asset = assetType;
+            
+            // Get asset info
+            const assetInfo = this.getAssetInfo(assetType);
+            element.innerHTML = `
+                <div class="flex items-center justify-center">
+                    <span class="text-xs">${assetInfo.icon}</span>
+                </div>
+                <div class="text-center text-xs truncate">${assetInfo.name}</div>
+            `;
+            
+            // Add click handler for selection
+            element.addEventListener('click', () => {
+                this.selectAsset(assetType, element);
+            });
+            
+            // Clear the drop zone placeholder if it's the first element
+            if (!zone.querySelector('.timeline-element')) {
+                zone.innerHTML = '';
+            }
+            zone.appendChild(element);
+            
+            // Add to timeline data
+            if (!this.timeline[trackType]) {
+                this.timeline[trackType] = [];
+            }
+            this.timeline[trackType].push({
+                type: assetType,
+                element: element,
+                properties: this.getDefaultProperties(assetType)
+            });
+            
+            console.log(`Added ${assetType} to ${trackType} track`);
+        },
+        
+        getAssetInfo(type) {
+            const assets = {
+                'title-card': { icon: '📋', name: 'Title Card', duration: '0:03' },
+                'lower-third': { icon: '📝', name: 'Lower Third', duration: '0:05' },
+                'captions': { icon: '💬', name: 'Captions', duration: '0:30' },
+                'broll-slot': { icon: '🎬', name: 'B-Roll', duration: '0:10' },
+                'news-clip': { icon: '📺', name: 'News Clip', duration: '0:08' },
+                'ai-video': { icon: '🤖', name: 'AI Video', duration: '0:12' },
+                'sponsor-slot': { icon: '💼', name: 'Sponsor', duration: '0:15' },
+                'screenshot': { icon: '📊', name: 'Screenshot', duration: '0:04' },
+                'transition': { icon: '✨', name: 'Transition', duration: '0:01' },
+                'overlay': { icon: '🎨', name: 'Overlay', duration: '0:30' }
+            };
+            return assets[type] || { icon: '❓', name: 'Unknown', duration: '0:01' };
+        },
+        
+        getDefaultProperties(type) {
+            const defaults = {
+                'title-card': {
+                    text: 'Enter Title Here',
+                    fontSize: 48,
+                    color: '#ffffff',
+                    animation: 'fadeIn'
+                },
+                'lower-third': {
+                    name: 'Speaker Name',
+                    title: 'Job Title',
+                    backgroundColor: '#1f2937'
+                },
+                'broll-slot': {
+                    query: 'technology startup',
+                    duration: 10,
+                    autoSource: true
+                }
+            };
+            return defaults[type] || {};
+        },
+        
+        selectAsset(type, element) {
+            // Remove previous selection
+            document.querySelectorAll('.timeline-element').forEach(elem => {
+                elem.style.borderColor = '';
+                elem.classList.remove('ring-2', 'ring-yellow-400');
+            });
+            
+            // Highlight selected element
+            element.classList.add('ring-2', 'ring-yellow-400');
+            this.selectedAsset = { type, element };
+            
+            // Show properties panel
+            this.showPropertiesPanel(type);
+        },
+        
+        showPropertiesPanel(type) {
+            // Hide all property panels
+            document.querySelectorAll('[id$="-properties"]').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            
+            // Show default message
+            const defaultPanel = document.querySelector('#properties-panel > div:first-child');
+            defaultPanel.classList.add('hidden');
+            
+            // Show specific properties panel if it exists
+            const propertiesPanel = document.getElementById(`${type}-properties`);
+            if (propertiesPanel) {
+                propertiesPanel.classList.remove('hidden');
+            } else {
+                // Show generic properties
+                this.showGenericProperties(type);
+            }
+        },
+        
+        showGenericProperties(type) {
+            const panel = document.getElementById('editor-properties-panel');
+            const assetInfo = this.getAssetInfo(type);
+            
+            panel.innerHTML = `
+                <h4 class="font-semibold text-white mb-4">${assetInfo.icon} ${assetInfo.name} Settings</h4>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Duration</label>
+                        <input type="text" class="w-full px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded" value="${assetInfo.duration}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Position</label>
+                        <select class="w-full px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded">
+                            <option>Start of timeline</option>
+                            <option>After voice-over</option>
+                            <option>Custom timing</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Animation Style</label>
+                        <select class="w-full px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded">
+                            <option>Fade In/Out</option>
+                            <option>Slide From Left</option>
+                            <option>Scale Up</option>
+                            <option>No Animation</option>
+                        </select>
+                    </div>
+                    <button class="w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-all">
+                        Remove Element
+                    </button>
+                </div>
+            `;
+        },
+        
+        saveTemplate() {
+            const template = {
+                name: prompt('Enter template name:') || 'Untitled Template',
+                timeline: this.timeline,
+                created: new Date().toISOString()
+            };
+            
+            // TODO: Send to backend API
+            console.log('Saving template:', template);
+            alert('Template saved! (Backend integration coming soon)');
+        },
+        
+        previewTemplate() {
+            // TODO: Connect to Remotion preview
+            console.log('Previewing template with timeline:', this.timeline);
+            alert('Preview will show in Remotion player (Integration coming soon)');
+        }
+    }
+}
+
+// Add event listeners when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // This will be called after Alpine.js initializes
+    setTimeout(() => {
+        if (window.videoEditor) {
+            window.videoEditor.setupDragAndDrop();
+        }
+    }, 100);
+});
+</script>
+{% endblock %}

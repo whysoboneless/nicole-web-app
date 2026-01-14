@@ -1,0 +1,693 @@
+{% extends "modern_base.html" %}
+
+{% block title %}My Channels - Nicole AI{% endblock %}
+
+{% block page_title %}My Channels{% endblock %}
+{% block page_description %}Monitor and manage your connected YouTube channels{% endblock %}
+
+{% block content %}
+<div x-data="channelsPage()" x-init="init()">
+    <!-- Channel Lifecycle Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
+        <div class="glass-effect rounded-xl p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Testing</p>
+                    <p class="text-2xl font-bold text-yellow-600" x-text="stats.testing">2</p>
+                    <p class="text-xs text-gray-500">30 videos/14 days</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-xl">🧪</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Scaling</p>
+                    <p class="text-2xl font-bold text-blue-600" x-text="stats.scaling">1</p>
+                    <p class="text-xs text-gray-500">Ramping up</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-xl">📈</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Established</p>
+                    <p class="text-2xl font-bold text-green-600" x-text="stats.established">2</p>
+                    <p class="text-xs text-gray-500">Profitable</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-xl">🚀</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Warning</p>
+                    <p class="text-2xl font-bold text-orange-600" x-text="stats.warning">0</p>
+                    <p class="text-xs text-gray-500">Needs attention</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-xl">⚠️</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Failed</p>
+                    <p class="text-2xl font-bold text-red-600" x-text="stats.failed">0</p>
+                    <p class="text-xs text-gray-500">0 view hell</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-xl">💀</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Inactive</p>
+                    <p class="text-2xl font-bold text-gray-600" x-text="stats.inactive">0</p>
+                    <p class="text-xs text-gray-500">No automation</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-r from-gray-500 to-gray-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-xl">⏸️</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Bar -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div class="flex items-center space-x-4">
+            <h3 class="text-lg font-semibold text-gray-900">Channel Overview</h3>
+            <div class="flex items-center space-x-2 flex-wrap">
+                <button @click="filterStatus = 'all'" 
+                        :class="filterStatus === 'all' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'"
+                        class="px-3 py-1 rounded-full text-sm font-medium transition-colors">
+                    All
+                </button>
+                <button @click="filterStatus = 'testing'" 
+                        :class="filterStatus === 'testing' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'"
+                        class="px-3 py-1 rounded-full text-sm font-medium transition-colors">
+                    🧪 Testing
+                </button>
+                <button @click="filterStatus = 'scaling'" 
+                        :class="filterStatus === 'scaling' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'"
+                        class="px-3 py-1 rounded-full text-sm font-medium transition-colors">
+                    📈 Scaling
+                </button>
+                <button @click="filterStatus = 'established'" 
+                        :class="filterStatus === 'established' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'"
+                        class="px-3 py-1 rounded-full text-sm font-medium transition-colors">
+                    🚀 Established
+                </button>
+                <button @click="filterStatus = 'failed'" 
+                        :class="filterStatus === 'failed' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'"
+                        class="px-3 py-1 rounded-full text-sm font-medium transition-colors">
+                    💀 Failed
+                </button>
+                <button @click="filterStatus = 'inactive'" 
+                        :class="filterStatus === 'inactive' ? 'bg-gray-100 text-gray-700' : 'bg-gray-100 text-gray-600'"
+                        class="px-3 py-1 rounded-full text-sm font-medium transition-colors">
+                    ⏸️ Inactive
+                </button>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-3">
+            <button @click="refreshChannels()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+                🔄 Refresh
+            </button>
+            <button @click="showConnectModal()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all">
+                + Connect Channel
+            </button>
+        </div>
+    </div>
+
+    <!-- Channels Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <template x-for="channel in filteredChannels" :key="channel.id">
+            <div class="glass-effect rounded-xl p-6 card-hover">
+                <!-- Channel Header -->
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold" x-text="channel.name.charAt(0)"></span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900" x-text="channel.name"></h4>
+                            <p class="text-sm text-gray-600" x-text="channel.subscribers + ' subscribers'"></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div :class="getStatusColor(channel.lifecycle)" 
+                             class="px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
+                            <span x-text="getStatusIcon(channel.lifecycle)"></span>
+                            <span x-text="channel.lifecycle.toUpperCase()"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testing Progress (for testing channels) -->
+                <div x-show="channel.lifecycle === 'testing'" class="mb-4">
+                    <div class="flex items-center justify-between text-sm mb-2">
+                        <span class="text-gray-600">Testing Progress</span>
+                        <span class="font-medium" x-text="channel.testingProgress.current + '/' + channel.testingProgress.total + ' videos'"></span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                        <div class="bg-yellow-500 h-2 rounded-full transition-all duration-300" 
+                             :style="'width: ' + (channel.testingProgress.current / channel.testingProgress.total * 100) + '%'"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span x-text="channel.testingProgress.daysLeft + ' days remaining'"></span>
+                        <span x-text="Math.round((channel.testingProgress.current / channel.testingProgress.total) * 100) + '% complete'"></span>
+                    </div>
+                </div>
+
+                <!-- Channel Stats -->
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <p class="text-xs text-gray-600">Avg Views</p>
+                        <p class="font-semibold" :class="channel.avgViews > 100 ? 'text-green-600' : 'text-red-600'" x-text="channel.avgViews"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-600">Subscribers</p>
+                        <p class="font-semibold text-blue-600" x-text="channel.subscribers"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-600">Growth Rate</p>
+                        <p class="font-semibold" :class="channel.growthRate >= 0 ? 'text-green-600' : 'text-red-600'" 
+                           x-text="(channel.growthRate >= 0 ? '+' : '') + channel.growthRate + '%'"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-600">Est. Revenue</p>
+                        <p class="font-semibold text-green-600" x-text="'$' + channel.estimatedRevenue"></p>
+                    </div>
+                </div>
+
+                <!-- Dynamic Progress Bar -->
+                <div class="mb-4" x-show="channel.lifecycle === 'testing'" x-cloak>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-gray-600">Testing Progress</span>
+                        <span class="text-xs font-medium" x-text="channel.testingProgress.current + '/' + channel.testingProgress.total + ' videos'"></span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                        <div class="bg-yellow-500 h-2 rounded-full transition-all duration-300" 
+                             :style="'width: ' + (channel.testingProgress.current / channel.testingProgress.total * 100) + '%'"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span x-text="channel.testingProgress.daysLeft + ' days remaining'"></span>
+                        <span x-text="Math.round((channel.testingProgress.current / channel.testingProgress.total) * 100) + '% complete'"></span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex space-x-2">
+                    <button @click="viewAnalytics(channel)" 
+                            class="flex-1 bg-indigo-100 text-indigo-700 py-2 px-3 rounded-lg hover:bg-indigo-200 transition-colors text-sm font-medium">
+                        📊 Analytics
+                    </button>
+                    <button @click="manageChannel(channel)" 
+                            class="flex-1 bg-purple-100 text-purple-700 py-2 px-3 rounded-lg hover:bg-purple-200 transition-colors text-sm font-medium">
+                        ⚙️ Manage
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Empty State -->
+    <div x-show="filteredChannels.length === 0" class="text-center py-12">
+        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="text-4xl">📺</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">No channels found</h3>
+        <p class="text-gray-600 mb-6">Connect your first YouTube channel to get started with automation.</p>
+        <button @click="showConnectModal()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all">
+            Connect Your First Channel
+        </button>
+    </div>
+</div>
+
+<!-- Connect Channel Modal -->
+<div id="connectModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Connect YouTube Channel</h3>
+                <button id="closeConnectModal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Step 1: Enter Channel URL -->
+            <div id="step1" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">YouTube Channel URL</label>
+                    <input type="text" id="channelUrl" placeholder="https://youtube.com/channel/..." 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Supports @username, channel URLs, or custom URLs</p>
+                </div>
+                <button id="submitUrlBtn" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors">
+                    Get Authorization Link
+                </button>
+            </div>
+            
+            <!-- Step 2: Authorization Instructions -->
+            <div id="step2" class="space-y-4 hidden">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h4 class="font-medium text-blue-900 mb-2" id="channelInfo">Channel: Loading...</h4>
+                    <p class="text-sm text-blue-800">Follow these steps to connect your channel:</p>
+                    <ol class="list-decimal list-inside text-sm text-blue-700 mt-2 space-y-1">
+                        <li>Click the "Authorize" button below</li>
+                        <li>Allow access to your YouTube channel</li>
+                        <li>Copy the authorization code</li>
+                        <li>Return here and paste the code</li>
+                    </ol>
+                </div>
+                
+                <a id="authLink" href="#" target="_blank" class="block w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors text-center">
+                    🔗 Authorize on YouTube
+                </a>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Authorization Code</label>
+                    <input type="text" id="authCode" placeholder="Paste the code from YouTube here..." 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                
+                <button id="submitCodeBtn" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                    Complete Connection
+                </button>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="loadingState" class="text-center py-4 hidden">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+                <p class="text-gray-600">Processing...</p>
+            </div>
+            
+            <!-- Cancel Button -->
+            <div class="mt-6">
+                <button id="cancelConnectModal" class="w-full px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Channel Management Modal -->
+<div id="manageModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Manage Channel</h3>
+                <button id="closeManageModal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Channel Info -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                <h4 class="font-medium text-gray-900" id="manageChannelName">Channel Name</h4>
+                <p class="text-sm text-gray-600" id="manageChannelInfo">0 subscribers • Connected today</p>
+            </div>
+            
+            <!-- Management Options -->
+            <div class="space-y-3">
+                <button class="w-full flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span class="text-xl mr-3">⚙️</span>
+                    <div class="text-left">
+                        <h5 class="font-medium text-gray-900">Channel Settings</h5>
+                        <p class="text-sm text-gray-600">Update upload settings, descriptions, tags</p>
+                    </div>
+                </button>
+                
+                <button class="w-full flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span class="text-xl mr-3">🔄</span>
+                    <div class="text-left">
+                        <h5 class="font-medium text-gray-900">Refresh Connection</h5>
+                        <p class="text-sm text-gray-600">Re-authorize YouTube access</p>
+                    </div>
+                </button>
+                
+                <button class="w-full flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span class="text-xl mr-3">🚀</span>
+                    <div class="text-left">
+                        <h5 class="font-medium text-gray-900">Create Campaign</h5>
+                        <p class="text-sm text-gray-600">Start video automation for this channel</p>
+                    </div>
+                </button>
+                
+                <button class="w-full flex items-center p-3 border border-red-200 rounded-lg hover:bg-red-50 transition-colors text-red-600">
+                    <span class="text-xl mr-3">🗑️</span>
+                    <div class="text-left">
+                        <h5 class="font-medium text-red-700">Disconnect Channel</h5>
+                        <p class="text-sm text-red-600">Remove this channel from Nicole</p>
+                    </div>
+                </button>
+            </div>
+            
+            <!-- Cancel -->
+            <div class="mt-6">
+                <button id="cancelManageModal" class="w-full px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function channelsPage() {
+    return {
+        filterStatus: 'all',
+        totalRevenue: 0,
+        loading: true,
+        
+        stats: {
+            testing: 0,
+            scaling: 0,
+            established: 0,
+            warning: 0,
+            failed: 0,
+            inactive: 0
+        },
+        
+        channels: [],
+        
+        // Connection modal state
+        currentChannelInfo: null,
+        
+        async init() {
+            await this.loadChannels();
+            this.initializeModal();
+        },
+        
+        async loadChannels() {
+            try {
+                this.loading = true;
+                const response = await fetch('/api/channels');
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.channels = data.channels.map(channel => ({
+                        id: channel.channel_id,
+                        name: channel.title || 'Unknown Channel',
+                        channel_id: channel.channel_id,
+                        title: channel.title,
+                        subscribers: channel.subscribers || '0',
+                        lifecycle: channel.lifecycle || 'inactive',
+                        connected_at: channel.connected_at,
+                        oauth_data: channel.oauth_data,
+                        // Automation status
+                        has_active_automation: channel.has_active_automation || false,
+                        // Default stats - enhance with real analytics later
+                        avgViews: channel.avgViews || 0,
+                        growthRate: channel.growthRate || 0,
+                        estimatedRevenue: channel.estimatedRevenue || 0,
+                        testingProgress: channel.testingProgress || { current: 0, total: 30, daysLeft: 30 }
+                    }));
+                    
+                    this.updateStats();
+                }
+                
+                this.loading = false;
+            } catch (error) {
+                console.error('Error loading channels:', error);
+                this.loading = false;
+            }
+        },
+        
+        updateStats() {
+            // Reset stats
+            this.stats = { testing: 0, scaling: 0, established: 0, warning: 0, failed: 0, inactive: 0 };
+            
+            // Count channels by lifecycle
+            this.channels.forEach(channel => {
+                if (this.stats[channel.lifecycle] !== undefined) {
+                    this.stats[channel.lifecycle]++;
+                }
+            });
+            
+            // Calculate total revenue
+            this.totalRevenue = this.channels.reduce((sum, channel) => sum + (channel.estimatedRevenue || 0), 0);
+        },
+        
+        get filteredChannels() {
+            if (this.filterStatus === 'all') return this.channels;
+            return this.channels.filter(channel => channel.lifecycle === this.filterStatus);
+        },
+        
+        getStatusColor(lifecycle) {
+            const colors = {
+                'testing': 'bg-yellow-100 text-yellow-700',
+                'scaling': 'bg-blue-100 text-blue-700',
+                'established': 'bg-green-100 text-green-700',
+                'warning': 'bg-orange-100 text-orange-700',
+                'failed': 'bg-red-100 text-red-700',
+                'inactive': 'bg-gray-100 text-gray-700'
+            };
+            return colors[lifecycle] || 'bg-gray-100 text-gray-700';
+        },
+        
+        getStatusIcon(lifecycle) {
+            const icons = {
+                'testing': '🧪',
+                'scaling': '📈', 
+                'established': '🚀',
+                'warning': '⚠️',
+                'failed': '💀',
+                'inactive': '⏸️'
+            };
+            return icons[lifecycle] || '📺';
+        },
+        
+        getLifecycleColor(lifecycle) {
+            const colors = {
+                'testing': 'bg-yellow-500',
+                'scaling': 'bg-blue-500',
+                'established': 'bg-green-500',
+                'warning': 'bg-orange-500',
+                'failed': 'bg-red-500'
+            };
+            return colors[lifecycle] || 'bg-gray-500';
+        },
+        
+        async refreshChannels() {
+            await this.loadChannels();
+        },
+        
+        viewAnalytics(channel) {
+            // Redirect to analytics page for this channel
+            window.location.href = `/analytics?channel=${channel.channel_id}`;
+        },
+        
+        manageChannel(channel) {
+            this.showManageModal(channel);
+        },
+        
+        showManageModal(channel) {
+            // Set channel info in modal
+            document.getElementById('manageChannelName').textContent = channel.name;
+            document.getElementById('manageChannelInfo').textContent = `${channel.subscribers} subscribers • Connected ${this.formatDate(channel.connected_at)}`;
+            document.getElementById('manageModal').classList.remove('hidden');
+        },
+        
+        hideManageModal() {
+            document.getElementById('manageModal').classList.add('hidden');
+        },
+        
+        formatDate(dateString) {
+            if (!dateString) return 'recently';
+            const date = new Date(dateString);
+            return date.toLocaleDateString();
+        },
+        
+        showConnectModal() {
+            document.getElementById('connectModal').classList.remove('hidden');
+            this.resetModal();
+        },
+        
+        hideConnectModal() {
+            document.getElementById('connectModal').classList.add('hidden');
+            this.resetModal();
+        },
+        
+        resetModal() {
+            // Reset modal state
+            document.getElementById('step1').classList.remove('hidden');
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('channelUrl').value = '';
+            document.getElementById('authCode').value = '';
+            this.currentChannelInfo = null;
+        },
+        
+        async initializeModal() {
+            this.initializeConnectModal();
+            this.initializeManageModal();
+        },
+        
+        initializeConnectModal() {
+            const modal = document.getElementById('connectModal');
+            
+            // Close modal events
+            document.getElementById('closeConnectModal').addEventListener('click', () => this.hideConnectModal());
+            document.getElementById('cancelConnectModal').addEventListener('click', () => this.hideConnectModal());
+            
+            // Close when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) this.hideConnectModal();
+            });
+            
+            // Step 1: Submit URL
+            document.getElementById('submitUrlBtn').addEventListener('click', async () => {
+                const channelUrl = document.getElementById('channelUrl').value.trim();
+                
+                if (!channelUrl) {
+                    alert('Please enter a YouTube channel URL');
+                    return;
+                }
+                
+                await this.connectChannel(channelUrl);
+            });
+            
+            // Step 2: Submit authorization code
+            document.getElementById('submitCodeBtn').addEventListener('click', async () => {
+                const authCode = document.getElementById('authCode').value.trim();
+                
+                if (!authCode) {
+                    alert('Please enter the authorization code');
+                    return;
+                }
+                
+                await this.authorizeChannel(authCode);
+            });
+        },
+        
+        async connectChannel(channelUrl) {
+            try {
+                this.showLoading();
+                
+                const response = await fetch('/api/channels/connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channel_url: channelUrl })
+                });
+                
+                const data = await response.json();
+                this.hideLoading();
+                
+                if (data.success) {
+                    // Store channel info for authorization step
+                    this.currentChannelInfo = data.channel_info;
+                    
+                    // Update UI for step 2
+                    document.getElementById('channelInfo').textContent = 
+                        `${data.channel_info.title} (${data.channel_info.subscriber_count} subscribers)`;
+                    document.getElementById('authLink').href = data.oauth_url;
+                    
+                    // Show step 2
+                    document.getElementById('step1').classList.add('hidden');
+                    document.getElementById('step2').classList.remove('hidden');
+                } else {
+                    alert(data.error || 'Failed to connect channel');
+                }
+                
+            } catch (error) {
+                this.hideLoading();
+                console.error('Error connecting channel:', error);
+                alert('Error connecting channel. Please try again.');
+            }
+        },
+        
+        async authorizeChannel(authCode) {
+            try {
+                this.showLoading();
+                
+                const response = await fetch('/api/channels/authorize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        auth_code: authCode,
+                        channel_id: this.currentChannelInfo.id,
+                        channel_title: this.currentChannelInfo.title
+                    })
+                });
+                
+                // Check if response is ok before parsing JSON
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('HTTP Error:', response.status, errorText);
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        alert(errorData.error || `Server error (${response.status})`);
+                    } catch {
+                        alert(`Server error (${response.status}): ${errorText}`);
+                    }
+                    this.hideLoading();
+                    return;
+                }
+                
+                const data = await response.json();
+                this.hideLoading();
+                
+                if (data.success) {
+                    alert(`Successfully connected ${this.currentChannelInfo.title}!`);
+                    this.hideConnectModal();
+                    await this.loadChannels(); // Refresh channels list
+                } else {
+                    alert(data.error || 'Failed to authorize channel');
+                }
+                
+            } catch (error) {
+                this.hideLoading();
+                console.error('Error authorizing channel:', error);
+                alert(`Error authorizing channel: ${error.message || 'Please try again.'}`);
+            }
+        },
+        
+        showLoading() {
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('hidden');
+        },
+        
+        hideLoading() {
+            document.getElementById('loadingState').classList.add('hidden');
+        },
+        
+        initializeManageModal() {
+            // Close manage modal events
+            document.getElementById('closeManageModal').addEventListener('click', () => this.hideManageModal());
+            document.getElementById('cancelManageModal').addEventListener('click', () => this.hideManageModal());
+            
+            // Close when clicking outside
+            document.getElementById('manageModal').addEventListener('click', (e) => {
+                if (e.target.id === 'manageModal') this.hideManageModal();
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

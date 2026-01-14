@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - Nicole AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50" style="font-family: 'Inter', sans-serif;">
+    <div class="max-w-7xl mx-auto p-6">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Projects</h1>
+                <p class="text-gray-600">Manage your competitive intelligence groups</p>
+            </div>
+            <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                + Create New Project
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for project in projects %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ project.name }}</h3>
+                <p class="text-sm text-gray-600 mb-4">{{ project.competitors }} competitors • {{ project.status }}</p>
+                <p class="text-sm text-green-600 font-medium mb-4">{{ project.revenue_potential }}</p>
+                
+                <div class="flex space-x-2">
+                    <button class="flex-1 bg-indigo-600 text-white px-3 py-2 rounded text-sm hover:bg-indigo-700">
+                        View Intelligence
+                    </button>
+                    <button class="flex-1 bg-gray-200 text-gray-800 px-3 py-2 rounded text-sm hover:bg-gray-300">
+                        Start Campaign
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

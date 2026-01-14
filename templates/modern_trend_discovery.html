@@ -1,0 +1,737 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Trend Discovery - Nicole AI{% endblock %}
+{% block page_title %}Trend Discovery{% endblock %}
+{% block page_description %}Discover trending series and themes across all your projects{% endblock %}
+
+{% block extra_head %}
+<style>
+    .series-card { 
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        border-left: 4px solid transparent;
+    }
+    .series-card:hover { 
+        transform: translateY(-2px); 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+        border-left-color: #667eea;
+    }
+    .performance-badge {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+    }
+    .filter-chip {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .filter-chip:hover {
+        background-color: #f3f4f6;
+    }
+    .filter-chip.active {
+        background-color: #667eea;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header with Global Stats -->
+<div class="glass-effect rounded-xl p-6 mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">🔥 Trend Discovery</h1>
+            <p class="text-gray-600">Discover what's working across all your projects - no group selection needed!</p>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="text-center">
+                <p class="text-2xl font-bold text-indigo-600">{{ total_series }}</p>
+                <p class="text-sm text-gray-600">Total Series</p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-bold text-green-600">{{ groups_data|length }}</p>
+                <p class="text-sm text-gray-600">Projects</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Project Filter Chips -->
+    <div class="flex flex-wrap gap-2 mb-4">
+        <a href="{{ url_for('dashboard.trend_discovery') }}" 
+           class="filter-chip px-3 py-1 rounded-full text-sm border {% if not current_filter %}active{% else %}border-gray-300 text-gray-700{% endif %}">
+            🌟 All Projects
+        </a>
+        {% for group in groups_data %}
+        <a href="{{ url_for('dashboard.trend_discovery', group_id=group._id) }}" 
+           class="filter-chip px-3 py-1 rounded-full text-sm border {% if current_filter == group._id|string %}active{% else %}border-gray-300 text-gray-700{% endif %}">
+            {{ group.name }} ({{ group.series_count }})
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+    <!-- Series & Themes (Main Content) -->
+    <div class="lg:col-span-3 min-w-0">
+        <div class="glass-effect rounded-xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">🚀 Trending Content Opportunities</h2>
+                <div class="flex items-center space-x-4">
+                    <!-- Performance Filter -->
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">Show:</span>
+                        <select id="performanceFilter" class="px-3 py-1 border border-gray-300 rounded-md text-sm">
+                            <option value="all">All Combinations</option>
+                            <option value="outliers">🚀 Top Outliers (2x+ above average)</option>
+                            <option value="hot">🔥 High Performers (500K+ views)</option>
+                            <option value="rising">📈 Above Average (100K+ views)</option>
+                        </select>
+                    </div>
+                    <!-- Sort Filter -->
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">Sort by:</span>
+                        <select id="sortFilter" class="px-3 py-1 border border-gray-300 rounded-md text-sm">
+                            <option value="outlier_score">🎯 Outlier Score (vs channel avg)</option>
+                            <option value="avg_views">📊 Theme Avg Views</option>
+                            <option value="total_views">📈 Total Views</option>
+                            <option value="video_count">🎬 Video Count</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pagination Controls -->
+            <div class="flex items-center justify-between mb-4">
+                <p class="text-sm text-gray-600">
+                    Showing <span id="currentRange">1-5</span> of <span id="totalCount">{{ all_series|length }}</span> opportunities
+                </p>
+                <div class="flex items-center space-x-2">
+                    <button id="prevPage" class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        ← Previous
+                    </button>
+                    <span id="pageInfo" class="px-3 py-1 text-sm">Page <span id="currentPageNum">1</span> of <span id="totalPages">{{ ((all_series|length + 4) // 5) }}</span></span>
+                    <button id="nextPage" class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Next →
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Compact Data Table -->
+            <div id="seriesGrid" class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <!-- Table Header -->
+                <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                    <div class="grid grid-cols-10 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        <div class="col-span-3">Series + Theme</div>
+                        <div class="col-span-2">Performance vs Channel Avg</div>
+                        <div class="col-span-1 text-center">Videos</div>
+                        <div class="col-span-1 text-center">Theme Avg</div>
+                        <div class="col-span-2">Outlier Score</div>
+                        <div class="col-span-1 text-right">Actions</div>
+                    </div>
+                </div>
+                
+                <!-- Table Body -->
+                <div class="divide-y divide-gray-100">
+                    {% for combo in all_series %}
+                    <div class="series-card hover:bg-gray-50 transition-colors"
+                         data-total-views="{{ combo.theme_total_views or 0 }}"
+                         data-avg-views="{{ combo.theme_avg_views or 0 }}"
+                         data-video-count="{{ combo.theme_video_count or 0 }}"
+                         data-outlier-score="{{ combo.outlier_score or 0 }}"
+                         data-series-name="{{ combo.series_name or 'Unnamed Series' }}"
+                         data-theme-name="{{ combo.theme_name or 'Unnamed Theme' }}">
+                        
+                        <div class="px-6 py-4">
+                            <div class="grid grid-cols-10 gap-4 items-center">
+                                
+                                <!-- Series + Theme Info -->
+                                <div class="col-span-3">
+                                    <div class="flex items-center space-x-3">
+                                        <!-- Outlier Badge -->
+                                        <div class="flex-shrink-0">
+                                            {% if combo.outlier_level == 'extreme' %}
+                                            <span class="w-3 h-3 bg-red-500 rounded-full inline-block" title="🚀 Extreme Outlier (3x+)"></span>
+                                            {% elif combo.outlier_level == 'high' %}
+                                            <span class="w-3 h-3 bg-orange-500 rounded-full inline-block" title="🔥 High Outlier (2x+)"></span>
+                                            {% elif combo.outlier_level == 'moderate' %}
+                                            <span class="w-3 h-3 bg-yellow-500 rounded-full inline-block" title="📈 Moderate Outlier (1.5x+)"></span>
+                                            {% else %}
+                                            <span class="w-3 h-3 bg-gray-300 rounded-full inline-block" title="Standard Performance"></span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <h3 class="font-semibold text-gray-900 truncate">{{ combo.series_name or "Unnamed Series" }}</h3>
+                                            <p class="text-sm text-indigo-600 truncate">{{ combo.theme_name or "Unnamed Theme" }}</p>
+                                            <p class="text-xs text-gray-500 truncate">{{ combo.group_name }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Performance vs Channel Avg -->
+                                <div class="col-span-2">
+                                    <div class="text-sm">
+                                        <p class="font-semibold text-gray-900">{{ combo.theme_avg_views | format_views if combo.theme_avg_views else "0" }}</p>
+                                        <p class="text-gray-500">vs {{ combo.channel_avg_views | format_views if combo.channel_avg_views else "0" }} avg</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Video Count -->
+                                <div class="col-span-1 text-center">
+                                    <span class="font-semibold text-gray-900">{{ combo.theme_video_count or 0 }}</span>
+                                </div>
+                                
+                                <!-- Theme Avg -->
+                                <div class="col-span-1 text-center">
+                                    <span class="text-sm text-gray-600">{{ combo.theme_avg_views | format_views if combo.theme_avg_views else "0" }}</span>
+                                </div>
+                                
+                                <!-- Outlier Score -->
+                                <div class="col-span-2">
+                                    <div class="flex items-center space-x-2">
+                                        {% if combo.outlier_score >= 3.0 %}
+                                        <span class="inline-flex items-center px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full font-medium">
+                                            🚀 {{ "%.1f"|format(combo.outlier_score) }}x
+                                        </span>
+                                        {% elif combo.outlier_score >= 2.0 %}
+                                        <span class="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full font-medium">
+                                            🔥 {{ "%.1f"|format(combo.outlier_score) }}x
+                                        </span>
+                                        {% elif combo.outlier_score >= 1.5 %}
+                                        <span class="inline-flex items-center px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full font-medium">
+                                            📈 {{ "%.1f"|format(combo.outlier_score) }}x
+                                        </span>
+                                        {% else %}
+                                        <span class="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                            {{ "%.1f"|format(combo.outlier_score) }}x
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Actions -->
+                                <div class="col-span-1 text-right">
+                                    <div class="flex justify-end space-x-1">
+                                        <button class="create-content-btn bg-indigo-500 hover:bg-indigo-600 text-white px-2 py-1 rounded text-xs font-medium transition-colors"
+                                                data-group-id="{{ combo.group_id }}"
+                                                data-series-name="{{ combo.series_name }}"
+                                                data-theme-name="{{ combo.theme_name }}"
+                                                title="Create content for this series+theme combination">
+                                            🚀 Create
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+                
+                {% if not all_series %}
+                <div class="text-center py-12">
+                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-3xl">📈</span>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No Series Data Found</h3>
+                    <p class="text-gray-600 mb-4">
+                        {% if current_filter %}
+                        No series data available for this project. Try selecting a different project or view all projects.
+                        {% else %}
+                        Start by creating a project and running competitor analysis to discover trending series.
+                        {% endif %}
+                    </p>
+                    {% if not current_filter %}
+                    <a href="{{ url_for('dashboard.create_group') }}" 
+                       class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                        Create First Project
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+        </div>
+    </div>
+    
+    <!-- Sidebar - Quick Actions & Stats -->
+    <div class="space-y-6">
+        <!-- Quick Actions -->
+        <div class="glass-effect rounded-xl p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">🚀 Quick Actions</h3>
+            <div class="space-y-3">
+                <a href="/campaigns/create" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">🧙</span>
+                    <div>
+                        <p class="font-medium text-gray-900">Campaign Wizard</p>
+                        <p class="text-xs text-gray-600">Create automation campaign</p>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('dashboard.create_group') }}" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">➕</span>
+                    <div>
+                        <p class="font-medium text-gray-900">New Project</p>
+                        <p class="text-xs text-gray-600">Analyze competitors</p>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('dashboard.content_creation') }}" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">✏️</span>
+                    <div>
+                        <p class="font-medium text-gray-900">Content Studio</p>
+                        <p class="text-xs text-gray-600">Manual creation</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Top Competitors -->
+        {% if all_competitors %}
+        <div class="glass-effect rounded-xl p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">🎯 Top Competitors</h3>
+            <div class="space-y-3">
+                {% for competitor in all_competitors[:5] %}
+                <div class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50">
+                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span class="text-xs font-medium">{{ competitor.channel_name[:2] if competitor.channel_name else "?" }}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium text-gray-900 text-sm truncate">{{ competitor.channel_name or "Unknown Channel" }}</p>
+                        <p class="text-xs text-gray-600">{{ competitor.group_name }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Performance Insights -->
+        <div class="glass-effect rounded-xl p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">💡 Insights</h3>
+            <div class="space-y-4">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <p class="text-sm font-medium text-green-800">🔥 Trending Now</p>
+                    <p class="text-xs text-green-700 mt-1">AI-focused content is performing 340% better this week</p>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p class="text-sm font-medium text-blue-800">📈 Opportunity</p>
+                    <p class="text-xs text-blue-700 mt-1">Short-form content under 3 minutes has higher engagement</p>
+                </div>
+                
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                    <p class="text-sm font-medium text-purple-800">⚡ Automation Tip</p>
+                    <p class="text-xs text-purple-700 mt-1">Best performing series are ideal for daily automation</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Production Method Selection Modal -->
+<div id="productionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900" id="modalTitle">Choose Production Method</h3>
+                <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Selected Series+Theme Info -->
+            <div class="mb-6 p-4 bg-indigo-50 rounded-lg">
+                <h4 class="font-medium text-indigo-900" id="selectedSeries">Series Name</h4>
+                <p class="text-sm text-indigo-700" id="selectedTheme">Theme Name</p>
+                <p class="text-xs text-indigo-600" id="selectedProject">Project Name</p>
+            </div>
+            
+            <!-- Resource Status (shown if resources needed) -->
+            <div id="resourceStatus" class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg hidden">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h5 class="text-sm font-medium text-yellow-800">Resources Needed</h5>
+                        <p class="text-sm text-yellow-700" id="resourceMessage">This combination needs script breakdown and thumbnail model training before content creation.</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button id="prepareResourcesBtn" class="w-full bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
+                        🔧 Prepare Resources First
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Production Method Selection -->
+            <div id="productionMethods" class="space-y-3">
+                <button id="massProductionBtn" class="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-indigo-300 transition-colors">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <span class="text-2xl">🧙</span>
+                        </div>
+                        <div class="ml-4 text-left">
+                            <h4 class="font-medium text-gray-900">Campaign Wizard</h4>
+                            <p class="text-sm text-gray-600">Create automated video campaigns</p>
+                        </div>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+                
+                <button id="manualProductionBtn" class="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-indigo-300 transition-colors">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <span class="text-2xl">🎬</span>
+                        </div>
+                        <div class="ml-4 text-left">
+                            <h4 class="font-medium text-gray-900">Manual Production</h4>
+                            <p class="text-sm text-gray-600">Create individual videos manually</p>
+                        </div>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Cancel Button -->
+            <div class="mt-6">
+                <button id="cancelModal" class="w-full px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// View formatting function
+function formatViews(views) {
+    if (!views || views === 0) return '0';
+    
+    const num = parseInt(views);
+    if (num >= 1000000000) {
+        return (num / 1000000000).toFixed(1) + 'B';
+    } else if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toLocaleString();
+}
+
+// Format all view numbers on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Format total views
+    document.querySelectorAll('[data-total-views]').forEach(el => {
+        const views = el.getAttribute('data-total-views');
+        if (el.tagName === 'P') {
+            el.textContent = formatViews(views);
+        }
+    });
+    
+    // Format avg views
+    document.querySelectorAll('[data-avg-views]').forEach(el => {
+        const views = el.getAttribute('data-avg-views');
+        if (el.tagName === 'P') {
+            el.textContent = formatViews(views);
+        }
+    });
+    
+    initializePagination();
+    initializeFiltering();
+    initializeContentCreation();
+    
+    // Modal close buttons
+    document.getElementById('closeModal').addEventListener('click', hideProductionModal);
+    document.getElementById('cancelModal').addEventListener('click', hideProductionModal);
+    
+    // Close modal when clicking outside
+    document.getElementById('productionModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            hideProductionModal();
+        }
+    });
+    
+    // Resource preparation button
+    document.getElementById('prepareResourcesBtn').addEventListener('click', async function() {
+        this.disabled = true;
+        this.innerHTML = '⏳ Preparing...';
+        
+        try {
+            const prepResponse = await fetch('/api/prepare-resources', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    group_id: currentSelection.groupId,
+                    series_name: currentSelection.seriesName,
+                    theme_name: currentSelection.themeName
+                })
+            });
+            
+            const prepResult = await prepResponse.json();
+            
+            if (prepResult.success) {
+                alert('Resource preparation started! This will take a few minutes. You\'ll be notified when it\'s ready.');
+                hideProductionModal();
+            } else {
+                alert('Error preparing resources: ' + (prepResult.error || 'Unknown error'));
+            }
+            
+        } catch (error) {
+            console.error('Error preparing resources:', error);
+            alert('Error preparing resources. Please try again.');
+        }
+        
+        this.disabled = false;
+        this.innerHTML = '🔧 Prepare Resources First';
+    });
+    
+    // Production method buttons
+    document.getElementById('massProductionBtn').addEventListener('click', function() {
+        // Redirect to campaign wizard with pre-selected options
+        const params = new URLSearchParams({
+            project_id: currentSelection.groupId,
+            series: currentSelection.seriesName,
+            theme: currentSelection.themeName
+        });
+        window.location.href = `/campaigns/create?${params.toString()}`;
+    });
+    
+    document.getElementById('manualProductionBtn').addEventListener('click', function() {
+        // Redirect to manual production studio with pre-selected options
+        const params = new URLSearchParams({
+            project_id: currentSelection.groupId,
+            series: currentSelection.seriesName,
+            theme: currentSelection.themeName
+        });
+        window.location.href = `/studio?${params.toString()}`;
+    });
+});
+
+// Pagination functionality
+let currentPage = 1;
+const itemsPerPage = 5;
+let allSeriesCards = [];
+let filteredCards = [];
+
+// Modal variables
+let currentSelection = {
+    groupId: '',
+    seriesName: '',
+    themeName: '',
+    projectName: ''
+};
+
+function initializePagination() {
+    allSeriesCards = Array.from(document.querySelectorAll('.series-card'));
+    filteredCards = [...allSeriesCards];
+    updatePagination();
+}
+
+function updatePagination() {
+    const totalItems = filteredCards.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    
+    // Update pagination info
+    const startItem = ((currentPage - 1) * itemsPerPage) + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+    
+    document.getElementById('currentRange').textContent = totalItems > 0 ? `${startItem}-${endItem}` : '0-0';
+    document.getElementById('totalCount').textContent = totalItems;
+    document.getElementById('currentPageNum').textContent = currentPage;
+    document.getElementById('totalPages').textContent = totalPages;
+    
+    // Update button states
+    document.getElementById('prevPage').disabled = currentPage <= 1;
+    document.getElementById('nextPage').disabled = currentPage >= totalPages;
+    
+    // Show/hide cards
+    allSeriesCards.forEach(card => card.style.display = 'none');
+    
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const cardsToShow = filteredCards.slice(startIndex, endIndex);
+    
+    cardsToShow.forEach(card => card.style.display = 'block');
+}
+
+// Pagination controls
+document.getElementById('prevPage').addEventListener('click', () => {
+    if (currentPage > 1) {
+        currentPage--;
+        updatePagination();
+    }
+});
+
+document.getElementById('nextPage').addEventListener('click', () => {
+    const totalPages = Math.ceil(filteredCards.length / itemsPerPage);
+    if (currentPage < totalPages) {
+        currentPage++;
+        updatePagination();
+    }
+});
+
+// Filtering functionality
+function initializeFiltering() {
+    document.getElementById('performanceFilter').addEventListener('change', applyFilters);
+    document.getElementById('sortFilter').addEventListener('change', applyFilters);
+}
+
+function applyFilters() {
+    const performanceFilter = document.getElementById('performanceFilter').value;
+    const sortFilter = document.getElementById('sortFilter').value;
+    
+    // Reset to all cards
+    filteredCards = [...allSeriesCards];
+    
+    // Apply performance filter
+    if (performanceFilter !== 'all') {
+        filteredCards = filteredCards.filter(card => {
+            const totalViews = parseInt(card.getAttribute('data-total-views')) || 0;
+            const videoCount = parseInt(card.getAttribute('data-video-count')) || 0;
+            
+            switch (performanceFilter) {
+                case 'hot':
+                    return totalViews >= 500000;
+                case 'rising':
+                    return totalViews >= 100000;
+                case 'consistent':
+                    return videoCount >= 10;
+                default:
+                    return true;
+            }
+        });
+    }
+    
+    // Apply sorting
+    filteredCards.sort((a, b) => {
+        const aValue = parseInt(a.getAttribute(`data-${sortFilter.replace('views', 'total-views').replace('_', '-')}`)) || 0;
+        const bValue = parseInt(b.getAttribute(`data-${sortFilter.replace('views', 'total-views').replace('_', '-')}`)) || 0;
+        
+        return bValue - aValue; // Descending order
+    });
+    
+    // Reset to first page and update
+    currentPage = 1;
+    updatePagination();
+}
+
+// Content creation functionality
+function initializeContentCreation() {
+    // Add event listeners to create content buttons
+    document.querySelectorAll('.create-content-btn').forEach(button => {
+        button.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            const groupId = this.getAttribute('data-group-id');
+            const seriesName = this.getAttribute('data-series-name');
+            const themeName = this.getAttribute('data-theme-name');
+            
+            if (!groupId || !seriesName || !themeName) {
+                alert('Missing required data for content creation');
+                return;
+            }
+            
+            // Get project name from the card
+            const card = this.closest('.series-card');
+            const projectName = card.querySelector('.text-xs.text-gray-500').textContent;
+            
+            // Store current selection
+            currentSelection = {
+                groupId: groupId,
+                seriesName: seriesName,
+                themeName: themeName,
+                projectName: projectName
+            };
+            
+            // Show loading state
+            const originalText = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = '⏳ Checking...';
+            this.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            try {
+                // Check if resources are ready
+                const checkResponse = await fetch('/api/check-resources', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        group_id: groupId,
+                        series_name: seriesName,
+                        theme_name: themeName
+                    })
+                });
+                
+                const checkResult = await checkResponse.json();
+                
+                // Restore button state
+                this.disabled = false;
+                this.innerHTML = originalText;
+                this.classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                // Show modal with appropriate content
+                showProductionModal(checkResult.has_resources);
+                
+            } catch (error) {
+                console.error('Error checking resources:', error);
+                alert('Error checking resources. Please try again.');
+                
+                // Restore button state
+                this.disabled = false;
+                this.innerHTML = originalText;
+                this.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+    });
+}
+
+// Modal functions
+function showProductionModal(hasResources) {
+    const modal = document.getElementById('productionModal');
+    const resourceStatus = document.getElementById('resourceStatus');
+    const productionMethods = document.getElementById('productionMethods');
+    
+    // Update modal content
+    document.getElementById('selectedSeries').textContent = currentSelection.seriesName;
+    document.getElementById('selectedTheme').textContent = currentSelection.themeName;
+    document.getElementById('selectedProject').textContent = currentSelection.projectName;
+    
+    if (hasResources) {
+        // Resources are ready - hide resource warning, show production methods
+        resourceStatus.classList.add('hidden');
+        productionMethods.classList.remove('hidden');
+        document.getElementById('modalTitle').textContent = 'Choose Production Method';
+    } else {
+        // Resources needed - show resource warning, hide production methods
+        resourceStatus.classList.remove('hidden');
+        productionMethods.classList.add('hidden');
+        document.getElementById('modalTitle').textContent = 'Resources Required';
+    }
+    
+    // Show modal
+    modal.classList.remove('hidden');
+}
+
+function hideProductionModal() {
+    document.getElementById('productionModal').classList.add('hidden');
+}
+
+
+</script>
+
+{% endblock %}

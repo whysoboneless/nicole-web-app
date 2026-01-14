@@ -1,0 +1,309 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Campaigns - Nicole AI{% endblock %}
+{% block page_title %}Campaign Manager{% endblock %}
+{% block page_description %}Manage your multi-channel automation campaigns{% endblock %}
+
+{% block extra_head %}
+<style>
+    .campaign-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    .campaign-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .campaign-card.active {
+        border-left-color: #10b981;
+    }
+    .campaign-card.paused {
+        border-left-color: #f59e0b;
+    }
+    .campaign-card.completed {
+        border-left-color: #6b7280;
+    }
+    .metric-card {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .status-active {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    .status-paused {
+        background-color: #fed7aa;
+        color: #92400e;
+    }
+    .status-completed {
+        background-color: #e5e7eb;
+        color: #374151;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <!-- Header Actions -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Your Campaigns</h1>
+            <p class="text-gray-600 mt-1">Manage multi-channel automation campaigns</p>
+        </div>
+        <a href="{{ url_for('campaigns.create_campaign_page') }}" 
+           class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl">
+            ➕ Create Campaign
+        </a>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass-effect rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Campaigns</p>
+                    <p class="text-3xl font-bold text-indigo-600">{{ total_campaigns }}</p>
+                </div>
+                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <span class="text-2xl">🎯</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Active Campaigns</p>
+                    <p class="text-3xl font-bold text-green-600">
+                        {{ campaigns | selectattr('status', 'equalto', 'active') | list | length }}
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <span class="text-2xl">✅</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Channels</p>
+                    <p class="text-3xl font-bold text-purple-600">
+                        {{ campaigns | sum(attribute='channel_count') }}
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <span class="text-2xl">📺</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Revenue</p>
+                    <p class="text-3xl font-bold text-blue-600">
+                        ${{ '%0.0f' | format(campaigns | sum(attribute='total_revenue')) }}
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <span class="text-2xl">💰</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Campaign List -->
+{% if campaigns %}
+<div class="space-y-4">
+    {% for campaign in campaigns %}
+    <div class="campaign-card glass-effect rounded-xl p-6 {{ campaign.status }}">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                    {% if campaign.objective == 'ecommerce' %}🛍️
+                    {% elif campaign.objective == 'cashcow' %}💰
+                    {% else %}📢{% endif %}
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900">
+                        <a href="{{ url_for('campaigns.campaign_detail', campaign_id=campaign._id) }}" 
+                           class="hover:text-indigo-600">
+                            {{ campaign.name }}
+                        </a>
+                    </h3>
+                    <div class="flex items-center space-x-3 mt-1">
+                        <span class="status-badge status-{{ campaign.status }}">
+                            {{ campaign.status | title }}
+                        </span>
+                        <span class="text-sm text-gray-600">
+                            {{ campaign.objective | replace('_', ' ') | title }}
+                        </span>
+                        <span class="text-sm text-gray-400">
+                            Created {{ campaign.created_at.strftime('%b %d, %Y') if campaign.created_at else 'Recently' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <a href="{{ url_for('campaigns.campaign_analytics', campaign_id=campaign._id) }}" 
+                   class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors">
+                    📊 Analytics
+                </a>
+                <a href="{{ url_for('campaigns.campaign_detail', campaign_id=campaign._id) }}" 
+                   class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">
+                    Manage →
+                </a>
+            </div>
+        </div>
+        
+        <!-- Campaign Metrics -->
+        <div class="grid grid-cols-5 gap-4 mt-4 pt-4 border-t border-gray-200">
+            <div>
+                <p class="text-sm text-gray-600 mb-1">Channels</p>
+                <p class="text-2xl font-bold text-gray-900">{{ campaign.channel_count }}</p>
+                <p class="text-xs text-green-600">{{ campaign.active_channels }} active</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600 mb-1">Total Views</p>
+                <p class="text-2xl font-bold text-gray-900">
+                    {% if campaign.total_views >= 1000000 %}
+                        {{ '%0.1f' | format(campaign.total_views / 1000000) }}M
+                    {% elif campaign.total_views >= 1000 %}
+                        {{ '%0.1f' | format(campaign.total_views / 1000) }}K
+                    {% else %}
+                        {{ campaign.total_views }}
+                    {% endif %}
+                </p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600 mb-1">Revenue</p>
+                <p class="text-2xl font-bold text-green-600">
+                    ${{ '%0.2f' | format(campaign.total_revenue) }}
+                </p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600 mb-1">API Cost</p>
+                <p class="text-2xl font-bold text-orange-600">
+                    ${{ '%0.2f' | format(campaign.total_api_cost) }}
+                </p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600 mb-1">ROI</p>
+                <p class="text-2xl font-bold {% if (campaign.total_revenue - campaign.total_api_cost) > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    {% if campaign.total_api_cost > 0 %}
+                        {{ '%0.0f' | format(((campaign.total_revenue - campaign.total_api_cost) / campaign.total_api_cost) * 100) }}%
+                    {% else %}
+                        ∞
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+            <div class="flex items-center space-x-4 text-sm text-gray-600">
+                {% if campaign.products and campaign.products|length > 0 %}
+                <span>🛍️ Promoting {{ campaign.products|length }} product(s)</span>
+                {% endif %}
+                {% if campaign.lifecycle_automation_enabled %}
+                <span>🤖 Automation ON</span>
+                {% endif %}
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                {% if campaign.status == 'active' %}
+                <button onclick="pauseCampaign('{{ campaign._id }}')" 
+                        class="text-sm text-orange-600 hover:text-orange-700 font-medium">
+                    ⏸️ Pause
+                </button>
+                {% elif campaign.status == 'paused' %}
+                <button onclick="resumeCampaign('{{ campaign._id }}')" 
+                        class="text-sm text-green-600 hover:text-green-700 font-medium">
+                    ▶️ Resume
+                </button>
+                {% endif %}
+                <button onclick="deleteCampaign('{{ campaign._id }}', '{{ campaign.name }}')" 
+                        class="text-sm text-red-600 hover:text-red-700 font-medium">
+                    🗑️ Delete
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<!-- Empty State -->
+<div class="glass-effect rounded-xl p-12 text-center">
+    <div class="w-24 h-24 bg-indigo-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+        <span class="text-5xl">🎯</span>
+    </div>
+    <h3 class="text-2xl font-bold text-gray-900 mb-2">No Campaigns Yet</h3>
+    <p class="text-gray-600 mb-6">Create your first multi-channel campaign to start automating content</p>
+    <a href="{{ url_for('campaigns.create_campaign_page') }}" 
+       class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all">
+        Create Your First Campaign
+    </a>
+</div>
+{% endif %}
+
+<script>
+function pauseCampaign(campaignId) {
+    if (!confirm('Are you sure you want to pause this campaign?')) return;
+    
+    fetch(`/campaigns/${campaignId}/pause`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to pause campaign'));
+        }
+    });
+}
+
+function resumeCampaign(campaignId) {
+    fetch(`/campaigns/${campaignId}/resume`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to resume campaign'));
+        }
+    });
+}
+
+function deleteCampaign(campaignId, campaignName) {
+    if (!confirm(`Are you sure you want to delete "${campaignName}"? This will also delete all associated channels and data. This action cannot be undone.`)) return;
+    
+    fetch(`/campaigns/${campaignId}/delete`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect || '/campaigns';
+        } else {
+            alert('Error: ' + (data.error || 'Failed to delete campaign'));
+        }
+    });
+}
+</script>
+{% endblock %}

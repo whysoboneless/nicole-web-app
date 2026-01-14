@@ -1,0 +1,432 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Instagram Studio - Nicole AI{% endblock %}
+
+{% block page_title %}Instagram Studio{% endblock %}
+{% block page_description %}Mass redistribution platform for Instagram Reels and videos{% endblock %}
+
+{% block content %}
+<div x-data="instagramStudio()">
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass-effect rounded-xl p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Connected Accounts</p>
+                    <p class="text-2xl font-bold text-pink-600" x-text="connectedAccounts">0</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-r from-pink-500 to-pink-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-xl">📱</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Videos Downloaded</p>
+                    <p class="text-2xl font-bold text-blue-600" x-text="videosDownloaded">0</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-xl">⬇️</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Videos Processed</p>
+                    <p class="text-2xl font-bold text-purple-600" x-text="videosProcessed">0</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-xl">⚙️</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Videos Uploaded</p>
+                    <p class="text-2xl font-bold text-green-600" x-text="videosUploaded">0</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-xl">⬆️</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Apple-Simple 3-Step Process -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <!-- Step 1: Add Accounts -->
+        <div class="glass-effect rounded-xl p-8 text-center card-hover">
+            <div class="w-16 h-16 bg-gradient-to-r from-pink-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-6">1</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3">Add Your Accounts</h3>
+            <p class="text-gray-600 mb-6">Add your Instagram accounts by niche</p>
+            <button @click="showAddAccountModal = true" 
+                    class="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white py-4 rounded-xl hover:from-pink-700 hover:to-purple-700 transition-all font-medium">
+                ➕ Add Instagram Account
+            </button>
+        </div>
+
+        <!-- Step 2: Steal Content -->
+        <div class="glass-effect rounded-xl p-8 text-center card-hover">
+            <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-6">2</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3">Steal Content</h3>
+            <p class="text-gray-600 mb-6">Download from any Instagram account</p>
+            <div class="space-y-4">
+                <input type="text" x-model="downloadForm.accountUrl" 
+                       placeholder="https://instagram.com/mrbeast"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <select x-model="downloadForm.niche" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Content type...</option>
+                    <option value="fitness">💪 Fitness</option>
+                    <option value="crypto">₿ Crypto</option>
+                    <option value="gaming">🎮 Gaming</option>
+                    <option value="gambling">🎰 Gambling</option>
+                    <option value="lifestyle">✨ Lifestyle</option>
+                    <option value="business">💼 Business</option>
+                    <option value="general">🌟 General</option>
+                </select>
+                <button @click="startDownload()" 
+                        :disabled="!downloadForm.accountUrl || !downloadForm.niche"
+                        class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50 font-medium">
+                    ⬇️ Steal All Videos
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Process & Auto-Upload -->
+        <div class="glass-effect rounded-xl p-8 text-center card-hover">
+            <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-6">3</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-3">Process & Auto-Upload</h3>
+            <p class="text-gray-600 mb-6">Add StakeUs! overlay and auto-schedule to all matching accounts</p>
+            <div class="space-y-4">
+                <select x-model="processForm.promoTemplate" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    <option value="">StakeUs! overlay...</option>
+                    <option value="stakeus_end_overlay">StakeUs! End Overlay (3s)</option>
+                    <option value="custom_video_upload">Upload Custom Video</option>
+                </select>
+                
+                <!-- Custom Video Upload -->
+                <div x-show="processForm.promoTemplate === 'custom_video_upload'" x-transition class="border-2 border-dashed border-gray-300 rounded-xl p-4 hover:border-green-400 transition-colors">
+                    <input type="file" @change="handleVideoUpload($event)" accept="video/*" class="hidden" id="stakeus-video-upload">
+                    <label for="stakeus-video-upload" class="cursor-pointer block text-center">
+                        <div class="text-2xl mb-2">📹</div>
+                        <div class="text-sm font-medium text-gray-900">Upload StakeUs! Video</div>
+                        <div class="text-xs text-gray-500">MP4, MOV up to 50MB</div>
+                    </label>
+                    <div x-show="processForm.customVideoFile" class="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                        <span class="text-sm text-green-800" x-text="processForm.customVideoFile?.name"></span>
+                    </div>
+                </div>
+                
+                <button @click="processAndAutoUpload()" 
+                        :disabled="!processForm.promoTemplate || videosDownloaded === 0 || connectedAccounts === 0"
+                        class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 rounded-xl hover:from-green-700 hover:to-green-800 transition-all disabled:opacity-50 font-medium">
+                    🚀 Process & Auto-Upload to All Accounts
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Library -->
+    <div class="glass-effect rounded-xl p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-6">🎬 Video Library</h3>
+        
+        <!-- Videos Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <template x-for="video in videos" :key="video.id">
+                <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                    <div class="relative">
+                        <img :src="video.thumbnail_url" :alt="video.caption" 
+                             class="w-full h-24 object-cover bg-gray-100">
+                        <div class="absolute top-1 right-1 px-2 py-1 rounded-full text-xs font-medium"
+                             :class="getStatusColor(video.status)"
+                             x-text="video.status"></div>
+                    </div>
+                    <div class="p-2">
+                        <p class="text-xs text-gray-900 line-clamp-2" x-text="video.caption"></p>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Empty State -->
+        <div x-show="videos.length === 0" class="text-center py-12">
+            <div class="text-6xl mb-4">🎬</div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">No Videos Yet</h3>
+            <p class="text-gray-600">Use Step 2 to steal content from Instagram accounts</p>
+        </div>
+    </div>
+
+    <!-- Add Account Modal -->
+    <div x-show="showAddAccountModal" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4" @click.away="showAddAccountModal = false">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Add Your Instagram Account</h3>
+            
+            <form @submit.prevent="addAccount()">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                        <input type="text" x-model="accountForm.username" required
+                               placeholder="your_instagram_username"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" x-model="accountForm.password" required
+                               placeholder="Your Instagram password"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Niche</label>
+                        <select x-model="accountForm.niche" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                            <option value="">Select niche...</option>
+                            <option value="fitness">💪 Fitness</option>
+                            <option value="crypto">₿ Crypto</option>
+                            <option value="gaming">🎮 Gaming</option>
+                            <option value="gambling">🎰 Gambling</option>
+                            <option value="lifestyle">✨ Lifestyle</option>
+                            <option value="business">💼 Business</option>
+                            <option value="general">🌟 General</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" @click="showAddAccountModal = false" 
+                            class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors">
+                        Add Account
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function instagramStudio() {
+    return {
+        // Stats
+        get connectedAccounts() {
+            return this.instagramAccounts.length;
+        },
+        get videosDownloaded() {
+            return this.videos.filter(v => v.status !== 'pending').length;
+        },
+        get videosProcessed() {
+            return this.videos.filter(v => v.status === 'processed' || v.status === 'uploaded').length;
+        },
+        get videosUploaded() {
+            return this.videos.filter(v => v.status === 'uploaded').length;
+        },
+
+        // Data
+        instagramAccounts: [],
+        videos: [],
+        
+        // UI State
+        showAddAccountModal: false,
+        
+        // Forms
+        accountForm: {
+            username: '',
+            password: '',
+            niche: ''
+        },
+        downloadForm: {
+            accountUrl: '',
+            niche: ''
+        },
+        processForm: {
+            promoTemplate: '',
+            customVideoFile: null
+        },
+
+        // Methods
+        async addAccount() {
+            try {
+                const response = await fetch('/api/instagram/add-account', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.accountForm)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ Instagram account added successfully!');
+                    this.loadAccounts();
+                    this.showAddAccountModal = false;
+                    this.accountForm = { username: '', password: '', niche: '' };
+                } else {
+                    alert(`❌ Error: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`❌ Error adding account: ${error.message}`);
+            }
+        },
+
+        async startDownload() {
+            try {
+                const response = await fetch('/api/instagram/download-from-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        account_url: this.downloadForm.accountUrl,
+                        niche: this.downloadForm.niche
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('🚀 Started stealing videos!');
+                    this.downloadForm = { accountUrl: '', niche: '' };
+                    this.loadVideos();
+                } else {
+                    alert(`❌ Error: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`❌ Error starting download: ${error.message}`);
+            }
+        },
+
+        async processAndAutoUpload() {
+            try {
+                let customVideoPath = null;
+                
+                // Upload custom video if selected
+                if (this.processForm.promoTemplate === 'custom_video_upload') {
+                    if (!this.processForm.customVideoFile) {
+                        alert('Please upload your StakeUs! video first');
+                        return;
+                    }
+                    customVideoPath = await this.uploadCustomVideo();
+                }
+                
+                // Process and auto-upload with scheduling
+                const response = await fetch('/api/instagram/process-and-auto-upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        promo_template: this.processForm.promoTemplate,
+                        custom_video_path: customVideoPath,
+                        posts_per_day: 3  // Optimal scheduling built-in
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`🚀 STARTED!\n\n${result.message}\n\nVideos will be processed with StakeUs! overlay and automatically scheduled to matching niche accounts at optimal times.`);
+                    this.loadVideos();
+                } else {
+                    alert(`❌ Error: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`❌ Error: ${error.message}`);
+            }
+        },
+
+        async uploadCustomVideo() {
+            if (!this.processForm.customVideoFile) return null;
+            
+            const formData = new FormData();
+            formData.append('video', this.processForm.customVideoFile);
+            formData.append('type', 'stakeus_overlay');
+            
+            try {
+                const response = await fetch('/api/instagram/upload-overlay-video', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    return result.video_path;
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('Error uploading custom video:', error);
+                throw error;
+            }
+        },
+
+        handleVideoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (!file.type.startsWith('video/')) {
+                    alert('Please select a video file');
+                    return;
+                }
+                
+                if (file.size > 50 * 1024 * 1024) {
+                    alert('File size must be less than 50MB');
+                    return;
+                }
+                
+                this.processForm.customVideoFile = file;
+            }
+        },
+
+        async loadAccounts() {
+            try {
+                const response = await fetch('/api/instagram/accounts');
+                const accounts = await response.json();
+                this.instagramAccounts = accounts;
+            } catch (error) {
+                console.error('Error loading accounts:', error);
+            }
+        },
+
+        async loadVideos() {
+            try {
+                const response = await fetch('/api/instagram/videos');
+                const videos = await response.json();
+                this.videos = videos;
+            } catch (error) {
+                console.error('Error loading videos:', error);
+            }
+        },
+
+        getStatusColor(status) {
+            const colors = {
+                'pending': 'bg-gray-100 text-gray-700',
+                'downloading': 'bg-blue-100 text-blue-700',
+                'downloaded': 'bg-green-100 text-green-700',
+                'processing': 'bg-purple-100 text-purple-700',
+                'processed': 'bg-indigo-100 text-indigo-700',
+                'uploading': 'bg-orange-100 text-orange-700',
+                'uploaded': 'bg-emerald-100 text-emerald-700'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-700';
+        },
+
+        // Initialize
+        init() {
+            this.loadAccounts();
+            this.loadVideos();
+            
+            // Refresh every 30 seconds
+            setInterval(() => {
+                this.loadVideos();
+            }, 30000);
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,1349 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Create Campaign - Nicole AI{% endblock %}
+{% block page_title %}Campaign Wizard{% endblock %}
+{% block page_description %}Set up your multi-channel automation campaign{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Premium Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes shimmer {
+        0% {
+            background-position: -1000px 0;
+        }
+        100% {
+            background-position: 1000px 0;
+        }
+    }
+    
+    @keyframes pulse-glow {
+        0%, 100% {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.6);
+        }
+    }
+    
+    @keyframes checkmark {
+        0% {
+            stroke-dashoffset: 100;
+        }
+        100% {
+            stroke-dashoffset: 0;
+        }
+    }
+    
+    /* Wizard Steps with Premium Transitions */
+    .wizard-step {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        display: none;
+        margin-bottom: 0;
+    }
+    
+    .wizard-step.active {
+        display: block !important;
+        animation: fadeInUp 0.6s ease-out;
+        margin-bottom: 0;
+    }
+    
+    .wizard-step.inactive {
+        display: none !important;
+        visibility: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }
+    
+    /* Premium Step Indicators */
+    .step-indicator {
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .step-indicator::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 100%;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, #e5e7eb 0%, #e5e7eb 100%);
+        transition: all 0.4s ease;
+    }
+    
+    .step-indicator.completed {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        animation: pulse-glow 2s ease-in-out;
+    }
+    
+    .step-indicator.completed::after {
+        background: linear-gradient(90deg, #10b981 0%, #e5e7eb 100%);
+    }
+    
+    .step-indicator.active {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+    
+    /* Glassmorphism Cards */
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    }
+    
+    /* Premium Objective Cards */
+    .objective-card {
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .objective-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .objective-card:hover::before {
+        left: 100%;
+    }
+    
+    .objective-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+    
+    .objective-card.selected {
+        border-color: #6366f1;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+        box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+    }
+    
+    /* Premium Buttons */
+    .premium-btn {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .premium-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .premium-btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .premium-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .premium-btn:active {
+        transform: translateY(0);
+    }
+    
+    /* Platform-Specific Gradients */
+    .btn-youtube {
+        background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
+        box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
+    }
+    
+    .btn-instagram {
+        background: linear-gradient(135deg, #E1306C 0%, #C13584 50%, #F56040 100%);
+        box-shadow: 0 4px 15px rgba(225, 48, 108, 0.3);
+    }
+    
+    .btn-tiktok {
+        background: linear-gradient(135deg, #00F2EA 0%, #FF0050 100%);
+        box-shadow: 0 4px 15px rgba(0, 242, 234, 0.3);
+    }
+    
+    /* Loading Skeleton */
+    .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 1000px 100%;
+        animation: shimmer 2s infinite;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto" x-data="campaignWizard()">
+    <!-- Progress Steps -->
+    <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center space-x-4 w-full">
+            <div class="flex items-center flex-1">
+                <div id="step-1-indicator" class="step-indicator active w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">1</div>
+                <div class="flex-1 h-0.5 bg-gray-300"></div>
+                            </div>
+            <div class="flex items-center flex-1">
+                <div id="step-2-indicator" class="step-indicator w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold">2</div>
+                <div class="flex-1 h-0.5 bg-gray-300"></div>
+                        </div>
+            <div class="flex items-center flex-1">
+                <div id="step-3-indicator" class="step-indicator w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold">3</div>
+                <div class="flex-1 h-0.5 bg-gray-300"></div>
+                    </div>
+            <div class="flex items-center flex-1">
+                <div id="step-4-indicator" class="step-indicator w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold">4</div>
+                <div class="flex-1 h-0.5 bg-gray-300"></div>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold" id="step-5-indicator">5</div>
+                </div>
+            </div>
+
+    <form id="campaignForm">
+        <!-- Step 1: Basic Info & Objective -->
+        <div id="step-1" class="wizard-step active glass-effect rounded-xl p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Campaign Basics</h2>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Campaign Name *</label>
+                <input type="text" name="name" id="campaignName" required
+                       class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                       placeholder="e.g., Summer Product Launch, Finance Cash Cow">
+                        </div>
+                        
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-4">Select Objective *</label>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="objective-card glass-effect rounded-xl p-6 text-center" onclick="selectObjective('product_sales')">
+                        <div class="text-4xl mb-3">🛍️</div>
+                        <h3 class="font-bold text-lg mb-2">Product Sales</h3>
+                        <p class="text-sm text-gray-600">Promote products with multi-channel campaigns</p>
+                                </div>
+                    <div class="objective-card glass-effect rounded-xl p-6 text-center" onclick="selectObjective('cashcow')">
+                        <div class="text-4xl mb-3">💰</div>
+                        <h3 class="font-bold text-lg mb-2">Cash Cow</h3>
+                        <p class="text-sm text-gray-600">High RPM channels for pure ad revenue</p>
+                            </div>
+                    <div class="objective-card glass-effect rounded-xl p-6 text-center" onclick="selectObjective('brand_awareness')">
+                        <div class="text-4xl mb-3">📢</div>
+                        <h3 class="font-bold text-lg mb-2">Brand Awareness</h3>
+                        <p class="text-sm text-gray-600">Build audience and brand visibility</p>
+                            </div>
+                        </div>
+                <input type="hidden" name="objective" id="objective" required>
+                    </div>
+                    
+            <div class="flex justify-end pt-6">
+                <button type="button" onclick="nextStep(1)" class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
+                    Next →
+                </button>
+                                </div>
+                            </div>
+                            
+        <!-- Step 2: Product/Target Info -->
+        <div id="step-2" class="wizard-step inactive glass-effect rounded-xl p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Campaign Details</h2>
+            
+            <!-- Product Sales - Product Selection -->
+            <div id="productInfo" class="hidden mb-6 space-y-4">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Product Information</h3>
+                
+                <!-- Product Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Product *</label>
+                    <div class="flex space-x-2 mb-2">
+                        <select name="product_id" id="productSelect" 
+                                @change="productSelected()"
+                                class="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500">
+                            <option value="">-- Select a saved product --</option>
+                            <option value="new">➕ Add New Product</option>
+                        </select>
+                        <a href="/products" target="_blank" class="px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium transition-colors flex items-center">
+                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                            Manage
+                        </a>
+                    </div>
+                    
+                    <!-- New Product Form (shown when "Add New Product" selected) -->
+                    <div id="newProductForm" class="hidden bg-gray-50 rounded-lg p-4 space-y-3 mt-2">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Product Name *</label>
+                                <input type="text" id="newProductName" 
+                                       class="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Product URL *</label>
+                                <input type="url" id="newProductUrl" 
+                                       class="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
+                                       placeholder="https://...">
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button type="button" @click="saveNewProduct()" 
+                                    class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
+                                Save & Use
+                            </button>
+                            <button type="button" @click="cancelNewProduct()" 
+                                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Manual URL Input (fallback) -->
+                    <div id="manualUrlInput" class="mt-2">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Or enter product URL directly</label>
+                    <div class="flex space-x-2">
+                        <input type="url" name="product_url" id="productUrl"
+                                   class="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 text-sm"
+                               placeholder="https://your-product.com"
+                               @input="productUrlChanged()">
+                        <button type="button" 
+                                @click="analyzeProduct()"
+                                :disabled="analyzingProduct"
+                                :class="analyzingProduct ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'"
+                                class="px-6 py-3 text-white rounded-lg font-medium transition-colors">
+                                <span x-show="!analyzingProduct">Analyze</span>
+                            <span x-show="analyzingProduct">Analyzing...</span>
+                        </button>
+                            </div>
+                    <p class="text-xs text-gray-500 mt-1">We'll automatically research the product and identify your target audience</p>
+                    </div>
+                    </div>
+                    
+                <!-- Research Results (shown after analysis) -->
+                <div x-show="productResearch && productResearch.success" 
+                     class="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                        <span class="font-medium text-green-800">Product Research Complete</span>
+                        </div>
+                    <div class="text-sm text-green-700 space-y-1">
+                        <div><strong>Product:</strong> <span x-text="productResearch.product?.name || 'Unknown'"></span></div>
+                        <div x-show="productResearch.product?.price" class="mt-1">
+                            <strong>Price:</strong> 
+                            <span x-text="productResearch.product?.price_formatted || (productResearch.product?.price ? '$' + parseFloat(productResearch.product.price).toFixed(2) : 'N/A')"></span>
+                        </div>
+                        <div class="mt-1">
+                            <strong>Description:</strong> 
+                            <p class="text-xs text-gray-600 mt-1 break-words" x-text="productResearch.product?.description || productResearch.product?.name || 'No description available'"></p>
+                        </div>
+                        <div class="mt-2">
+                            <strong>Target Audience:</strong>
+                            <ul class="list-disc list-inside ml-2 mt-1 space-y-1">
+                                <template x-for="buyer in (productResearch.target_audience?.primary_buyers || [])" :key="buyer">
+                                    <li x-text="buyer" class="text-sm"></li>
+                                </template>
+                                <template x-if="!productResearch.target_audience?.primary_buyers || productResearch.target_audience.primary_buyers.length === 0">
+                                    <li class="text-gray-500 text-sm">N/A</li>
+                                </template>
+                            </ul>
+                        </div>
+                        </div>
+                                </div>
+                            </div>
+                            
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between pt-6">
+                <button type="button" onclick="prevStep(2)" class="bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
+                    ← Back
+                </button>
+                <button type="button" onclick="nextStep(2)" class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
+                    Next →
+                </button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Platform Selection -->
+        <div id="step-3" class="wizard-step inactive glass-effect rounded-xl p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Platform Selection</h2>
+            
+            <!-- Platform Selection -->
+            <div x-show="productResearch && productResearch.success" class="space-y-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Select Platforms for Campaign</h3>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Which platforms do you want to use?</label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <label class="flex items-center space-x-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-indigo-400 cursor-pointer transition-colors">
+                                <input type="checkbox" value="youtube" x-model="selectedPlatforms" class="w-5 h-5 text-indigo-600 rounded">
+                                <div class="flex-1">
+                                    <div class="font-semibold text-gray-900">YouTube</div>
+                                    <p class="text-xs text-gray-500">Build retargeting audience</p>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center space-x-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-indigo-400 cursor-pointer transition-colors">
+                                <input type="checkbox" value="instagram" x-model="selectedPlatforms" class="w-5 h-5 text-indigo-600 rounded">
+                                <div class="flex-1">
+                                    <div class="font-semibold text-gray-900">Instagram</div>
+                                    <p class="text-xs text-gray-500">Carousel product ads</p>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center space-x-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-indigo-400 cursor-pointer transition-colors">
+                                <input type="checkbox" value="tiktok" x-model="selectedPlatforms" class="w-5 h-5 text-indigo-600 rounded">
+                                <div class="flex-1">
+                                    <div class="font-semibold text-gray-900">TikTok</div>
+                                    <p class="text-xs text-gray-500">UGC-style product ads</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- YouTube Channel Discovery -->
+                    <div x-show="selectedPlatforms.includes('youtube')" class="space-y-4">
+                        <h4 class="font-semibold text-gray-900 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10 0C4.477 0 0 4.477 0 10s4.477 10 10 10 10-4.477 10-10S15.523 0 10 0zm3.5 10.5l-4 3a.5.5 0 01-.75-.433V6.933a.5.5 0 01.75-.433l4 3a.5.5 0 010 .866z"/></svg>
+                            YouTube Channels
+                        </h4>
+                    
+                    <!-- Your Connected Channels -->
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-semibold text-gray-900">Your Connected Channels</h4>
+                            <button type="button" @click="loadAvailableChannels()" 
+                                    class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-600 mb-3">Channels you've already connected that aren't in any campaign</p>
+                        
+                        <div x-show="loadingAvailableChannels" class="text-center py-4">
+                            <svg class="animate-spin h-5 w-5 mx-auto text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="text-sm text-gray-600 mt-2">Loading your channels...</p>
+                        </div>
+                        
+                        <div x-show="availableChannels && availableChannels.length > 0" class="space-y-2 max-h-48 overflow-y-auto">
+                            <template x-for="channel in availableChannels" :key="channel.channel_id">
+                                <label class="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 cursor-pointer">
+                                    <input type="checkbox" :value="channel.channel_id" 
+                                           x-model="selectedChannels"
+                                           class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500">
+                                    <div class="flex-1">
+                                        <p class="font-medium text-gray-900" x-text="channel.channel_name"></p>
+                                        <p class="text-xs text-gray-500">
+                                            <span x-text="channel.subscriber_count?.toLocaleString() || 0"></span> subscribers
+                                            <span class="mx-1">•</span>
+                                            <span x-text="channel.video_count || 0"></span> videos
+                                        </p>
+                                    </div>
+                                    <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Connected</span>
+                                </label>
+                            </template>
+                        </div>
+                        
+                        <div x-show="availableChannels && availableChannels.length === 0 && !loadingAvailableChannels" 
+                             class="text-center py-4 text-gray-500 text-sm">
+                            <p>No available channels. Connect channels in the <a href="/channels" class="text-indigo-600 hover:underline">Channels</a> section.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Discover New Channels -->
+                    <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-semibold text-gray-900">Discover Matching Channels</h4>
+                            <button type="button" @click="discoverChannels()" 
+                                    :disabled="discoveringChannels"
+                                    :class="discoveringChannels ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'"
+                                    class="px-4 py-2 text-white rounded-lg font-medium transition-colors">
+                                <span x-show="!discoveringChannels">🔍 Discover Channels</span>
+                                <span x-show="discoveringChannels">Discovering...</span>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-600 mb-3">AI will find channels that match your product's target audience</p>
+                        
+                        <div class="mb-3">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">How many channels to discover?</label>
+                            <input type="number" id="channelCount" min="1" max="20" value="5"
+                                   class="w-24 px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 text-sm">
+                        </div>
+                        
+                        <div x-show="discoveringChannels" class="flex items-center space-x-2 text-indigo-600 py-2">
+                            <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span class="text-sm">Analyzing channels with AI...</span>
+                        </div>
+                        
+                        <!-- Discovered Channels List -->
+                        <div x-show="discoveredChannels && discoveredChannels.length > 0" class="mt-4 space-y-2 max-h-64 overflow-y-auto">
+                            <p class="text-xs font-medium text-gray-700 mb-2">Discovered Channels:</p>
+                            <template x-for="channel in discoveredChannels" :key="channel.channel_id">
+                                <label class="flex items-start space-x-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 cursor-pointer">
+                                    <input type="checkbox" :value="channel.channel_id" 
+                                           x-model="selectedChannels"
+                                           class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 mt-1">
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between">
+                                            <p class="font-medium text-gray-900" x-text="channel.channel_name"></p>
+                                            <span class="text-xs px-2 py-1 rounded" 
+                                                  :class="channel.match_type === 'direct' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                                                  x-text="channel.match_type === 'direct' ? 'Direct Match' : 'Adaptable'"></span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            <span x-text="channel.subscriber_count?.toLocaleString() || 0"></span> subscribers
+                                            <span class="mx-1">•</span>
+                                            Match Score: <span class="font-medium" x-text="(channel.match_score * 100).toFixed(0) + '%'"></span>
+                                        </p>
+                                        <div x-show="channel.ai_analysis" class="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
+                                            <p class="font-medium mb-1">AI Analysis:</p>
+                                            <p x-text="channel.ai_analysis?.substring(0, 200) + (channel.ai_analysis?.length > 200 ? '...' : '')"></p>
+                                        </div>
+                                        <div x-show="channel.adaptation_notes" class="mt-1 text-xs text-yellow-700">
+                                            <span class="font-medium">Adaptation:</span> <span x-text="channel.adaptation_notes"></span>
+                                        </div>
+                                    </div>
+                                </label>
+                            </template>
+                        </div>
+                        
+                        <div x-show="discoveredChannels && discoveredChannels.length === 0 && !discoveringChannels" 
+                             class="text-center py-4 text-gray-500 text-sm">
+                            <p>Click "Discover Channels" to find matching channels</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Selected Channels Summary -->
+                    <div x-show="selectedChannels && selectedChannels.length > 0" class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <p class="text-sm font-medium text-gray-900 mb-2">
+                            <span x-text="selectedChannels.length"></span> YouTube channel(s) selected
+                        </p>
+                        <input type="hidden" name="selected_channel_ids" :value="JSON.stringify(selectedChannels)">
+                    </div>
+                    </div>
+                    
+                    <!-- Instagram Account Discovery -->
+                    <div x-show="selectedPlatforms.includes('instagram')" class="space-y-4">
+                        <h4 class="font-semibold text-gray-900 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-pink-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                            Instagram Accounts
+                        </h4>
+                        
+                        <div class="bg-pink-50 border border-pink-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h5 class="font-semibold text-gray-900">Discover Instagram Accounts</h5>
+                                <button type="button" @click="discoverInstagramAccounts()" 
+                                        :disabled="discoveringIG"
+                                        :class="discoveringIG ? 'bg-gray-400 cursor-not-allowed' : 'bg-pink-600 hover:bg-pink-700'"
+                                        class="px-4 py-2 text-white rounded-lg font-medium transition-colors">
+                                    <span x-show="!discoveringIG">🔍 Discover IG Accounts</span>
+                                    <span x-show="discoveringIG">Discovering...</span>
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-600 mb-3">AI finds Instagram accounts matching your product's audience</p>
+                            
+                            <div class="mb-3">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">How many IG accounts?</label>
+                                <input type="number" x-model="igAccountCount" min="1" max="20" value="3"
+                                       class="w-24 px-3 py-2 rounded-lg border border-gray-300 text-sm">
+                            </div>
+                            
+                            <div x-show="discoveringIG" class="flex items-center space-x-2 text-pink-600 py-2">
+                                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span class="text-sm">Discovering Instagram accounts...</span>
+                            </div>
+                            
+                            <div x-show="discoveredIGAccounts && discoveredIGAccounts.length > 0" class="mt-4 space-y-2 max-h-64 overflow-y-auto">
+                                <p class="text-xs font-medium text-gray-700 mb-2">Discovered Accounts:</p>
+                                <template x-for="account in discoveredIGAccounts" :key="account.username">
+                                    <label class="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-pink-300 cursor-pointer">
+                                        <input type="checkbox" :value="account.username" x-model="selectedIGAccounts"
+                                               class="w-4 h-4 text-pink-600 rounded">
+                                        <div class="flex-1">
+                                            <p class="font-medium text-gray-900" x-text="account.username"></p>
+                                            <p class="text-xs text-gray-500">
+                                                <span x-text="account.follower_count?.toLocaleString()"></span> followers •
+                                                Match: <span x-text="(account.match_score * 100).toFixed(0) + '%'"></span>
+                                            </p>
+                                        </div>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- TikTok Account Discovery -->
+                    <div x-show="selectedPlatforms.includes('tiktok')" class="space-y-4">
+                        <h4 class="font-semibold text-gray-900 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/></svg>
+                            TikTok Accounts
+                        </h4>
+                        
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h5 class="font-semibold text-gray-900">Discover TikTok Accounts</h5>
+                                <button type="button" @click="discoverTikTokAccounts()" 
+                                        :disabled="discoveringTikTok"
+                                        :class="discoveringTikTok ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-900 hover:bg-gray-800'"
+                                        class="px-4 py-2 text-white rounded-lg font-medium transition-colors">
+                                    <span x-show="!discoveringTikTok">🔍 Discover TikTok Accounts</span>
+                                    <span x-show="discoveringTikTok">Discovering...</span>
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-600 mb-3">AI finds TikTok accounts matching your product's audience</p>
+                            
+                            <div class="mb-3">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">How many TikTok accounts?</label>
+                                <input type="number" x-model="tiktokAccountCount" min="1" max="20" value="5"
+                                       class="w-24 px-3 py-2 rounded-lg border border-gray-300 text-sm">
+                            </div>
+                            
+                            <div x-show="discoveringTikTok" class="flex items-center space-x-2 text-gray-900 py-2">
+                                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span class="text-sm">Discovering TikTok accounts...</span>
+                            </div>
+                            
+                            <div x-show="discoveredTikTokAccounts && discoveredTikTokAccounts.length > 0" class="mt-4 space-y-2 max-h-64 overflow-y-auto">
+                                <p class="text-xs font-medium text-gray-700 mb-2">Discovered Accounts:</p>
+                                <template x-for="account in discoveredTikTokAccounts" :key="account.username">
+                                    <label class="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-gray-400 cursor-pointer">
+                                        <input type="checkbox" :value="account.username" x-model="selectedTikTokAccounts"
+                                               class="w-4 h-4 text-gray-900 rounded">
+                                        <div class="flex-1">
+                                            <p class="font-medium text-gray-900" x-text="account.username"></p>
+                                            <p class="text-xs text-gray-500">
+                                                <span x-text="account.follower_count?.toLocaleString()"></span> followers •
+                                                Match: <span x-text="(account.match_score * 100).toFixed(0) + '%'"></span>
+                                            </p>
+                                        </div>
+                                    </label>
+                                </template>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                            
+                <!-- Hidden fields for backward compatibility -->
+                <input type="hidden" name="product_name" id="productName">
+                <input type="hidden" name="product_description" id="productDescription">
+                <input type="hidden" name="selected_product_id" id="selectedProductId">
+            </div>
+
+        <!-- Step 4: Budget & Automation -->
+        <div id="step-4" class="wizard-step inactive glass-effect rounded-xl p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Budget & Automation</h2>
+            
+            <!-- Budget Section - Facebook Ads Style: Shared Budget -->
+            <div class="mb-8 space-y-4">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Campaign Budget</h3>
+                <p class="text-sm text-gray-600 mb-4">All channels in this campaign will share this budget</p>
+                
+                <div class="grid grid-cols-2 gap-4">
+                <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Budget Type</label>
+                        <select name="budget_type" id="budgetType" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500">
+                            <option value="daily">Daily Budget</option>
+                            <option value="monthly" selected>Monthly Budget</option>
+                        </select>
+                </div>
+                <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <span id="budgetLabel">Monthly</span> Budget (USD)
+                        </label>
+                        <input type="number" name="api_cost_limit" value="500" step="0.01"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+                               placeholder="500">
+                        <p class="text-sm text-gray-500 mt-1" id="budgetHelp">Shared across all channels in this campaign</p>
+                    </div>
+                    </div>
+                </div>
+                
+            <!-- Lifecycle Automation -->
+                <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Channel Automation</h3>
+                <div class="bg-indigo-50 rounded-lg p-4 mb-4">
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" name="lifecycle_automation_enabled" id="lifecycleToggle" onchange="toggleLifecycleSettings()"
+                               class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500">
+                        <span class="font-medium text-gray-900">Enable Automatic Channel Management</span>
+                    </label>
+                    <p class="text-sm text-gray-600 mt-2 ml-8">
+                        Automatically pause channels that aren't performing and keep producing on winning channels
+                </p>
+            </div>
+
+                <div id="lifecycleSettings" class="hidden space-y-4 pl-4 border-l-2 border-indigo-200">
+                    <div class="grid grid-cols-2 gap-4">
+                    <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Testing Period (days)</label>
+                            <input type="number" name="testing_duration_days" value="30" min="1"
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500">
+                            <p class="text-sm text-gray-500 mt-1">How many days to test a channel before deciding</p>
+                        </div>
+                    <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Views to Evaluate</label>
+                            <input type="number" name="min_views_threshold" value="1000" min="0"
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500">
+                            <p class="text-sm text-gray-500 mt-1">Need at least this many views before making decisions</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Watch Time %</label>
+                        <input type="number" name="min_watch_time_percentage" value="40" min="0" max="100"
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500">
+                        <p class="text-sm text-gray-500 mt-1">Channels below this watch time % will be paused</p>
+                    </div>
+                    
+                    <div class="bg-blue-50 rounded-lg p-3">
+                        <p class="text-sm text-gray-700">
+                            <strong>How it works:</strong> After the testing period, channels that don't meet the minimum views and watch time thresholds will be automatically paused. Channels that perform well will continue producing videos.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between">
+                <button type="button" onclick="prevStep(4)" class="bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
+                    ← Back
+                </button>
+                <button type="button" onclick="nextStep(4)" class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
+                    Next →
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 5: Review & Create -->
+        <div id="step-5" class="wizard-step inactive glass-effect rounded-xl p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Review & Create</h2>
+            
+            <div id="reviewSummary" class="space-y-6 mb-8">
+                <!-- Will be populated by JavaScript -->
+                    </div>
+                    
+            <div class="flex justify-between pt-6">
+                <button type="button" onclick="prevStep(5)" class="bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
+                    ← Back
+                </button>
+                <button type="submit" id="submitButton" class="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg">
+                    ✅ Create Campaign
+                </button>
+                        </div>
+                    </div>
+    </form>
+            </div>
+
+<script>
+let currentStep = 1;
+let selectedObjective = null;
+
+function selectObjective(objective) {
+    selectedObjective = objective;
+    document.getElementById('objective').value = objective;
+    
+    // Update UI
+    document.querySelectorAll('.objective-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+}
+
+function nextStep(step) {
+    // Validation
+    if (step === 1) {
+        const name = document.getElementById('campaignName').value.trim();
+        if (!name) {
+            alert('Please enter a campaign name');
+            return;
+        }
+        if (!selectedObjective) {
+            alert('Please select an objective');
+            return;
+        }
+        
+        // Show product info if product_sales or ecommerce
+        if (selectedObjective === 'product_sales' || selectedObjective === 'ecommerce') {
+            document.getElementById('productInfo').classList.remove('hidden');
+        } else {
+            document.getElementById('productInfo').classList.add('hidden');
+        }
+    }
+    
+    if (step === 2) {
+        // Only validate product research for product_sales campaigns
+        if (selectedObjective === 'product_sales' || selectedObjective === 'ecommerce') {
+            const wizardEl = document.querySelector('[x-data*="campaignWizard"]');
+            if (wizardEl && wizardEl._x_dataStack && wizardEl._x_dataStack[0]) {
+                const wizard = wizardEl._x_dataStack[0];
+                if (!wizard.productResearch || !wizard.productResearch.success) {
+                    alert('Please analyze your product before continuing to platform selection');
+                    return;
+                }
+            }
+        } else {
+            // For non-product campaigns, skip product validation
+            // Just move forward
+        }
+    }
+    
+    if (step === 4) {
+        // Populate review
+        populateReview();
+    }
+    
+    // FORCE hide ALL steps first
+    for (let i = 1; i <= 5; i++) {
+        const stepEl = document.getElementById(`step-${i}`);
+        if (stepEl) {
+            stepEl.classList.remove('active');
+            stepEl.classList.add('inactive');
+            stepEl.style.display = 'none';
+        }
+    }
+    
+    // Show ONLY the next step
+    const nextStepEl = document.getElementById(`step-${step + 1}`);
+    if (nextStepEl) {
+        nextStepEl.classList.remove('inactive');
+        nextStepEl.classList.add('active');
+        nextStepEl.style.display = 'block';
+    }
+    
+    // Update indicators
+    document.getElementById(`step-${step}-indicator`).classList.add('completed');
+    document.getElementById(`step-${step}-indicator`).classList.remove('active');
+    document.getElementById(`step-${step + 1}-indicator`).classList.add('active');
+    
+    currentStep = step + 1;
+    window.scrollTo(0, 0);
+}
+
+function prevStep(step) {
+    // FORCE hide ALL steps first
+    for (let i = 1; i <= 5; i++) {
+        const stepEl = document.getElementById(`step-${i}`);
+        if (stepEl) {
+            stepEl.classList.remove('active');
+            stepEl.classList.add('inactive');
+            stepEl.style.display = 'none';
+        }
+    }
+    
+    // Show ONLY the previous step
+    const prevStepEl = document.getElementById(`step-${step - 1}`);
+    if (prevStepEl) {
+        prevStepEl.classList.remove('inactive');
+        prevStepEl.classList.add('active');
+        prevStepEl.style.display = 'block';
+    }
+    
+    // Update indicators
+    document.getElementById(`step-${step}-indicator`).classList.remove('active');
+    document.getElementById(`step-${step - 1}-indicator`).classList.add('active');
+    document.getElementById(`step-${step - 1}-indicator`).classList.remove('completed');
+    
+    currentStep = step - 1;
+    window.scrollTo(0, 0);
+}
+
+function toggleLifecycleSettings() {
+    const toggle = document.getElementById('lifecycleToggle');
+    const settings = document.getElementById('lifecycleSettings');
+    if (toggle.checked) {
+        settings.classList.remove('hidden');
+    } else {
+        settings.classList.add('hidden');
+    }
+}
+
+// FORCE initialize wizard - ensure only step 1 is visible
+document.addEventListener('DOMContentLoaded', function() {
+    // Hide all steps except step 1
+    for (let i = 1; i <= 5; i++) {
+        const stepEl = document.getElementById(`step-${i}`);
+        if (stepEl) {
+            if (i === 1) {
+                stepEl.classList.add('active');
+                stepEl.classList.remove('inactive');
+                stepEl.style.display = 'block';
+            } else {
+                stepEl.classList.remove('active');
+                stepEl.classList.add('inactive');
+                stepEl.style.display = 'none';
+            }
+        }
+    }
+    
+    // Update budget label based on type
+    const budgetType = document.getElementById('budgetType');
+    const budgetLabel = document.getElementById('budgetLabel');
+    const budgetHelp = document.getElementById('budgetHelp');
+    
+    if (budgetType) {
+        budgetType.addEventListener('change', function() {
+            if (this.value === 'daily') {
+                budgetLabel.textContent = 'Daily';
+                budgetHelp.textContent = 'Daily budget shared across all channels in this campaign';
+            } else {
+                budgetLabel.textContent = 'Monthly';
+                budgetHelp.textContent = 'Monthly budget shared across all channels in this campaign';
+            }
+        });
+    }
+});
+
+function populateReview() {
+    const form = document.getElementById('campaignForm');
+    const formData = new FormData(form);
+    
+    let html = `
+        <div class="bg-indigo-50 rounded-lg p-4">
+            <h3 class="font-semibold text-lg mb-2">Campaign: ${formData.get('name')}</h3>
+            <p class="text-gray-700">Objective: <span class="font-medium">${selectedObjective.replace('_', ' ')}</span></p>
+            </div>
+    `;
+    
+    if (selectedObjective === 'ecommerce' && formData.get('product_name')) {
+        html += `
+            <div class="bg-green-50 rounded-lg p-4">
+                <h4 class="font-semibold mb-2">Product</h4>
+                <p>${formData.get('product_name')}</p>
+                ${formData.get('product_url') ? `<p class="text-sm text-gray-600">${formData.get('product_url')}</p>` : ''}
+                    </div>
+        `;
+    }
+    
+    html += `
+        <div class="bg-blue-50 rounded-lg p-4">
+            <h4 class="font-semibold mb-2">Budget</h4>
+            <p>API Cost Limit: $${formData.get('api_cost_limit')}/month</p>
+            <p>Target Revenue: $${formData.get('target_revenue')}/month</p>
+                </div>
+    `;
+    
+    if (formData.get('lifecycle_automation_enabled')) {
+        html += `
+            <div class="bg-purple-50 rounded-lg p-4">
+                <h4 class="font-semibold mb-2">🤖 Automation Enabled</h4>
+                <p>Testing: ${formData.get('testing_duration_days')} days</p>
+                <p>Min Views: ${formData.get('min_views_threshold')}</p>
+                <p>Min Watch Time: ${formData.get('min_watch_time_percentage')}%</p>
+                    </div>
+        `;
+    }
+    
+    document.getElementById('reviewSummary').innerHTML = html;
+}
+
+// Load saved products on page load
+let savedProducts = [];
+async function loadSavedProducts() {
+    try {
+        const response = await fetch('/products/api/list');
+        const result = await response.json();
+        if (result.success) {
+            savedProducts = result.products || [];
+            const select = document.getElementById('productSelect');
+            // Clear existing options (keep "Select" and "Add New")
+            while (select.children.length > 2) {
+                select.removeChild(select.lastChild);
+            }
+            // Add saved products
+            savedProducts.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product._id;
+                option.textContent = `${product.name}${product.price ? ' ($' + parseFloat(product.price).toFixed(2) + ')' : ''}`;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading products:', error);
+    }
+}
+
+function campaignWizard() {
+    return {
+        analyzingProduct: false,
+        productResearch: null,
+        selectedProduct: null,
+        
+        // Platform selection
+        selectedPlatforms: [],
+        
+        // YouTube
+        discoveringChannels: false,
+        discoveredChannels: [],
+        availableChannels: [],
+        loadingAvailableChannels: false,
+        selectedChannels: [],
+        
+        // Instagram
+        discoveringIG: false,
+        discoveredIGAccounts: [],
+        selectedIGAccounts: [],
+        igAccountCount: 3,
+        
+        // TikTok  
+        discoveringTikTok: false,
+        discoveredTikTokAccounts: [],
+        selectedTikTokAccounts: [],
+        tiktokAccountCount: 5,
+        
+        async init() {
+            await loadSavedProducts();
+            await this.loadAvailableChannels();
+        },
+        
+        async loadAvailableChannels() {
+            this.loadingAvailableChannels = true;
+            try {
+                const response = await fetch('/campaigns/available-channels');
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.availableChannels = result.channels || [];
+                }
+            } catch (error) {
+                console.error('Error loading available channels:', error);
+            } finally {
+                this.loadingAvailableChannels = false;
+            }
+        },
+        
+        productSelected() {
+            const select = document.getElementById('productSelect');
+            const selectedValue = select.value;
+            
+            if (selectedValue === 'new') {
+                document.getElementById('newProductForm').classList.remove('hidden');
+                document.getElementById('manualUrlInput').classList.add('hidden');
+            } else if (selectedValue && selectedValue !== '') {
+                // Load product data
+                const product = savedProducts.find(p => p._id === selectedValue);
+                if (product) {
+                    this.selectedProduct = product;
+                    document.getElementById('selectedProductId').value = product._id;
+                    
+                    // Auto-populate product research
+                    if (product.url) {
+                        document.getElementById('productUrl').value = product.url;
+                        this.analyzeProductFromUrl(product.url);
+                    }
+                    
+                    // Hide new product form
+                    document.getElementById('newProductForm').classList.add('hidden');
+                    document.getElementById('manualUrlInput').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('newProductForm').classList.add('hidden');
+                document.getElementById('manualUrlInput').classList.remove('hidden');
+            }
+        },
+        
+        async saveNewProduct() {
+            const name = document.getElementById('newProductName').value.trim();
+            const url = document.getElementById('newProductUrl').value.trim();
+            
+            if (!name || !url) {
+                alert('Please enter both product name and URL');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/products/create', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        name: name,
+                        url: url
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Reload products and select the new one
+                    await loadSavedProducts();
+                    document.getElementById('productSelect').value = result.product_id;
+                    this.productSelected();
+                    
+                    // Auto-analyze
+                    this.analyzeProductFromUrl(url);
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to save product'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        },
+        
+        cancelNewProduct() {
+            document.getElementById('newProductForm').classList.add('hidden');
+            document.getElementById('manualUrlInput').classList.remove('hidden');
+            document.getElementById('productSelect').value = '';
+            document.getElementById('newProductName').value = '';
+            document.getElementById('newProductUrl').value = '';
+        },
+        
+        async analyzeProductFromUrl(url) {
+            if (!url) return;
+            
+            this.analyzingProduct = true;
+            
+            try {
+                const response = await fetch('/campaigns/research-product', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({product_url: url})
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.productResearch = result;
+                    window.campaignWizardData = { productResearch: result };
+                    if (result.product) {
+                        document.getElementById('productName').value = result.product.name || '';
+                        document.getElementById('productDescription').value = result.product.description || '';
+                    }
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to research product'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                this.analyzingProduct = false;
+            }
+        },
+        
+        async discoverChannels() {
+            if (!this.productResearch || !this.productResearch.success) {
+                alert('Please research a product first');
+                return;
+            }
+            
+            this.discoveringChannels = true;
+            this.discoveredChannels = null;
+            
+            try {
+                const channelCount = parseInt(document.getElementById('channelCount')?.value || 5);
+                
+                // For now, we'll discover after campaign creation
+                // But show a message that discovery will happen
+                alert(`Channel discovery will run automatically after campaign creation. We'll find ${channelCount} channels matching your product's audience.`);
+                
+                // Store channel count for later
+                this.channelCountToDiscover = channelCount;
+            } catch (error) {
+                console.error('Error in channel discovery:', error);
+                alert('Error preparing channel discovery: ' + error.message);
+            } finally {
+                this.discoveringChannels = false;
+            }
+        },
+        
+        async discoverInstagramAccounts() {
+            if (!this.productResearch || !this.productResearch.success) {
+                alert('Please research a product first');
+                return;
+            }
+            
+            this.discoveringIG = true;
+            this.discoveredIGAccounts = [];
+            
+            try {
+                alert(`Instagram account discovery will run after campaign creation. We'll find ${this.igAccountCount} accounts matching your product's audience.`);
+                this.igAccountsToDiscover = this.igAccountCount;
+            } catch (error) {
+                console.error('Error discovering Instagram accounts:', error);
+                alert('Error: ' + error.message);
+            } finally {
+                this.discoveringIG = false;
+            }
+        },
+        
+        async discoverTikTokAccounts() {
+            if (!this.productResearch || !this.productResearch.success) {
+                alert('Please research a product first');
+                return;
+            }
+            
+            this.discoveringTikTok = true;
+            this.discoveredTikTokAccounts = [];
+            
+            try {
+                alert(`TikTok account discovery will run after campaign creation. We'll find ${this.tiktokAccountCount} accounts matching your product's audience.`);
+                this.tiktokAccountsToDiscover = this.tiktokAccountCount;
+            } catch (error) {
+                console.error('Error discovering TikTok accounts:', error);
+                alert('Error: ' + error.message);
+            } finally {
+                this.discoveringTikTok = false;
+            }
+        },
+        
+        async discoverChannelsForCampaign(campaignId) {
+            if (!this.productResearch || !this.productResearch.success) return [];
+            
+            this.discoveringChannels = true;
+            try {
+                const channelCount = parseInt(document.getElementById('channelCount')?.value || 5);
+                
+                const response = await fetch(`/campaigns/${campaignId}/discover-channels`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({count: channelCount})
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.discoveredChannels = result.channels;
+                    return result.channels;
+                } else {
+                    console.error('Channel discovery failed:', result.error);
+                    return [];
+                }
+            } catch (error) {
+                console.error('Error discovering channels:', error);
+                return [];
+            } finally {
+                this.discoveringChannels = false;
+            }
+        },
+        
+        async analyzeProduct() {
+            const productUrl = document.getElementById('productUrl')?.value;
+            if (!productUrl) {
+                alert('Please enter a product URL');
+                return;
+            }
+            
+            this.analyzingProduct = true;
+            
+            try {
+                const response = await fetch('/campaigns/research-product', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({product_url: productUrl})
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.productResearch = result;
+                    // Store globally for form submission
+                    window.campaignWizardData = { productResearch: result };
+                    // Populate hidden fields
+                    if (result.product) {
+                        document.getElementById('productName').value = result.product.name || '';
+                        document.getElementById('productDescription').value = result.product.description || '';
+                    }
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to research product'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                this.analyzingProduct = false;
+            }
+        },
+        
+        productUrlChanged() {
+            // Clear research when URL changes
+            this.productResearch = null;
+            window.campaignWizardData = null;
+        }
+    };
+}
+
+// Form submission
+document.getElementById('campaignForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitButton = document.getElementById('submitButton');
+    submitButton.disabled = true;
+    submitButton.innerHTML = '⏳ Creating Campaign...';
+    
+    const formData = new FormData(this);
+    const data = {};
+    formData.forEach((value, key) => {
+        data[key] = value;
+    });
+    
+    // Include product research if available
+    const wizardData = Alpine.store('campaignWizard') || window.campaignWizardData;
+    if (wizardData && wizardData.productResearch) {
+        data['product_research'] = wizardData.productResearch;
+    }
+    
+    try {
+        const response = await fetch('/campaigns/create', {
+                            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            window.location.href = result.redirect;
+                        } else {
+                            alert('Error: ' + result.error);
+            submitButton.disabled = false;
+            submitButton.innerHTML = '✅ Create Campaign';
+                        }
+                    } catch (error) {
+        alert('Error creating campaign: ' + error.message);
+        submitButton.disabled = false;
+        submitButton.innerHTML = '✅ Create Campaign';
+                    }
+});
+    </script>
+{% endblock %}

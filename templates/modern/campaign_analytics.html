@@ -1,0 +1,273 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Analytics - {{ campaign.name }} - Nicole AI{% endblock %}
+{% block page_title %}Campaign Analytics{% endblock %}
+{% block page_description %}{{ campaign.name }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .metric-card {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <a href="{{ url_for('campaigns.campaign_detail', campaign_id=campaign._id) }}" 
+               class="text-gray-600 hover:text-gray-900 inline-block mb-2">
+                ← Back to Campaign
+            </a>
+            <h1 class="text-3xl font-bold text-gray-900">{{ campaign.name }} Analytics</h1>
+        </div>
+        
+        <div class="flex items-center space-x-2">
+            <select id="daysFilter" onchange="changeDateRange()" 
+                    class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500">
+                <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 Days</option>
+                <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 Days</option>
+                <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 Days</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="glass-effect rounded-xl p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Views</p>
+                <p class="text-3xl font-bold text-indigo-600">
+                    {{ (analytics|sum(attribute='views'))|int|format_number }}
+                </p>
+            </div>
+            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <span class="text-2xl">👁️</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="glass-effect rounded-xl p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Revenue</p>
+                <p class="text-3xl font-bold text-green-600">
+                    ${{ '%0.2f' | format(analytics|sum(attribute='revenue')) }}
+                </p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <span class="text-2xl">💰</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="glass-effect rounded-xl p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">API Costs</p>
+                <p class="text-3xl font-bold text-orange-600">
+                    ${{ '%0.2f' | format(analytics|sum(attribute='api_costs.total')) }}
+                </p>
+            </div>
+            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                <span class="text-2xl">💳</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="glass-effect rounded-xl p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Net Profit</p>
+                {% set total_revenue = analytics|sum(attribute='revenue') %}
+                {% set total_cost = analytics|sum(attribute='api_costs.total') %}
+                <p class="text-3xl font-bold {% if total_revenue - total_cost > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    ${{ '%0.2f' | format(total_revenue - total_cost) }}
+                </p>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <span class="text-2xl">📈</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Views Over Time -->
+    <div class="glass-effect rounded-xl p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Views Over Time</h3>
+        <canvas id="viewsChart"></canvas>
+    </div>
+    
+    <!-- Revenue vs Cost -->
+    <div class="glass-effect rounded-xl p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Revenue vs API Cost</h3>
+        <canvas id="revenueChart"></canvas>
+    </div>
+</div>
+
+<!-- Cost Breakdown -->
+<div class="glass-effect rounded-xl p-6 mb-6">
+    <h3 class="text-lg font-bold text-gray-900 mb-4">API Cost Breakdown</h3>
+    <div class="grid grid-cols-4 gap-4">
+        <div class="bg-indigo-50 rounded-lg p-4">
+            <p class="text-sm text-gray-600 mb-1">Anthropic (Claude)</p>
+            <p class="text-2xl font-bold text-indigo-600">
+                ${{ '%0.2f' | format(cost_breakdown.anthropic) }}
+            </p>
+            <p class="text-xs text-gray-500 mt-1">
+                {% if cost_breakdown.total > 0 %}
+                    {{ '%0.0f' | format((cost_breakdown.anthropic / cost_breakdown.total) * 100) }}% of total
+                {% endif %}
+            </p>
+        </div>
+        <div class="bg-purple-50 rounded-lg p-4">
+            <p class="text-sm text-gray-600 mb-1">ElevenLabs (Voice)</p>
+            <p class="text-2xl font-bold text-purple-600">
+                ${{ '%0.2f' | format(cost_breakdown.elevenlabs) }}
+            </p>
+            <p class="text-xs text-gray-500 mt-1">
+                {% if cost_breakdown.total > 0 %}
+                    {{ '%0.0f' | format((cost_breakdown.elevenlabs / cost_breakdown.total) * 100) }}% of total
+                {% endif %}
+            </p>
+        </div>
+        <div class="bg-pink-50 rounded-lg p-4">
+            <p class="text-sm text-gray-600 mb-1">Replicate (Images)</p>
+            <p class="text-2xl font-bold text-pink-600">
+                ${{ '%0.2f' | format(cost_breakdown.replicate) }}
+            </p>
+            <p class="text-xs text-gray-500 mt-1">
+                {% if cost_breakdown.total > 0 %}
+                    {{ '%0.0f' | format((cost_breakdown.replicate / cost_breakdown.total) * 100) }}% of total
+                {% endif %}
+            </p>
+        </div>
+        <div class="bg-orange-50 rounded-lg p-4">
+            <p class="text-sm text-gray-600 mb-1">Total</p>
+            <p class="text-2xl font-bold text-orange-600">
+                ${{ '%0.2f' | format(cost_breakdown.total) }}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Per-Channel Breakdown -->
+{% if channels %}
+<div class="glass-effect rounded-xl p-6">
+    <h3 class="text-lg font-bold text-gray-900 mb-4">Performance by Channel</h3>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Channel</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Views</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Revenue</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">API Cost</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profit</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ROI</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for channel in channels %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ channel.channel_name }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900">{{ channel.total_views|default(0)|int }}</td>
+                    <td class="px-4 py-3 text-sm font-medium text-green-600">
+                        ${{ '%0.2f' | format(channel.estimated_revenue|default(0)) }}
+                    </td>
+                    <td class="px-4 py-3 text-sm font-medium text-orange-600">
+                        ${{ '%0.2f' | format(channel.api_cost_spent|default(0)) }}
+                    </td>
+                    <td class="px-4 py-3 text-sm font-medium {% if (channel.estimated_revenue|default(0) - channel.api_cost_spent|default(0)) > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                        ${{ '%0.2f' | format(channel.estimated_revenue|default(0) - channel.api_cost_spent|default(0)) }}
+                    </td>
+                    <td class="px-4 py-3 text-sm font-bold {% if (channel.estimated_revenue|default(0) - channel.api_cost_spent|default(0)) > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                        {% if channel.api_cost_spent and channel.api_cost_spent > 0 %}
+                            {{ '%0.0f' | format(((channel.estimated_revenue - channel.api_cost_spent) / channel.api_cost_spent) * 100) }}%
+                        {% else %}
+                            ∞
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// Prepare data for charts
+const analyticsData = {{ analytics | tojson }};
+const dates = analyticsData.map(a => new Date(a.date).toLocaleDateString());
+const views = analyticsData.map(a => a.views);
+const revenue = analyticsData.map(a => a.revenue);
+const costs = analyticsData.map(a => a.api_costs.total);
+
+// Views Chart
+const viewsCtx = document.getElementById('viewsChart').getContext('2d');
+new Chart(viewsCtx, {
+    type: 'line',
+    data: {
+        labels: dates,
+        datasets: [{
+            label: 'Views',
+            data: views,
+            borderColor: 'rgb(99, 102, 241)',
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+// Revenue vs Cost Chart
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+new Chart(revenueCtx, {
+    type: 'bar',
+    data: {
+        labels: dates,
+        datasets: [
+            {
+                label: 'Revenue',
+                data: revenue,
+                backgroundColor: 'rgba(34, 197, 94, 0.8)',
+            },
+            {
+                label: 'API Cost',
+                data: costs,
+                backgroundColor: 'rgba(251, 146, 60, 0.8)',
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+function changeDateRange() {
+    const days = document.getElementById('daysFilter').value;
+    window.location.href = `?days=${days}`;
+}
+</script>
+{% endblock %}
+

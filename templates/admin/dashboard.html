@@ -1,0 +1,194 @@
+{% extends 'modern_admin_base.html' %}
+
+{% block title %}Admin Dashboard - NICOLE{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+{% block page_description %}System administration and management{% endblock %}
+
+{% block content %}
+
+<!-- Admin Stats -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="glass-effect rounded-xl p-6 card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Users</p>
+                <p class="text-3xl font-bold text-indigo-600">{{ stats.total_users }}</p>
+            </div>
+            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <span class="text-2xl">👥</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="glass-effect rounded-xl p-6 card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Groups</p>
+                <p class="text-3xl font-bold text-green-600">{{ stats.total_groups }}</p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <span class="text-2xl">📊</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="glass-effect rounded-xl p-6 card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Public Groups</p>
+                <p class="text-3xl font-bold text-blue-600">{{ stats.public_groups }}</p>
+                <p class="text-xs text-gray-600">{{ stats.private_groups }} private</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <span class="text-2xl">🌐</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="glass-effect rounded-xl p-6 card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Premium Users</p>
+                <p class="text-3xl font-bold text-yellow-600">{{ stats.premium_users }}</p>
+                <p class="text-xs text-gray-600">{{ stats.beta_users }} beta</p>
+            </div>
+            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <span class="text-2xl">💎</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="glass-effect rounded-xl p-6 mb-8">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">⚡ Quick Actions</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="{{ url_for('admin.manage_groups') }}" 
+           class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6 rounded-xl card-hover group">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold text-lg mb-1">Manage Groups</h3>
+                    <p class="text-green-100 text-sm">View and edit all groups</p>
+                </div>
+                <span class="text-3xl group-hover:scale-110 transition-transform">📊</span>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('admin.manage_users') }}" 
+           class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-xl card-hover group">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold text-lg mb-1">Manage Users</h3>
+                    <p class="text-blue-100 text-sm">User permissions</p>
+                </div>
+                <span class="text-3xl group-hover:scale-110 transition-transform">👥</span>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('admin.broadcast') }}" 
+           class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-xl card-hover group">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold text-lg mb-1">Send Broadcast</h3>
+                    <p class="text-purple-100 text-sm">Message all users</p>
+                </div>
+                <span class="text-3xl group-hover:scale-110 transition-transform">📢</span>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('admin.high_rpm_discovery') }}" 
+           class="bg-gradient-to-r from-yellow-500 to-orange-600 text-white p-6 rounded-xl card-hover group">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold text-lg mb-1">High RPM Discovery</h3>
+                    <p class="text-yellow-100 text-sm">Channel discovery</p>
+                </div>
+                <span class="text-3xl group-hover:scale-110 transition-transform">💰</span>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('admin.validate_niche') }}" 
+           class="bg-gradient-to-r from-pink-500 to-rose-600 text-white p-6 rounded-xl card-hover group">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold text-lg mb-1">Validate Niche</h3>
+                    <p class="text-pink-100 text-sm">Test niche viability</p>
+                </div>
+                <span class="text-3xl group-hover:scale-110 transition-transform">✅</span>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('dashboard.main') }}" 
+           class="bg-gradient-to-r from-gray-500 to-gray-600 text-white p-6 rounded-xl card-hover group">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold text-lg mb-1">User Dashboard</h3>
+                    <p class="text-gray-100 text-sm">Return to normal view</p>
+                </div>
+                <span class="text-3xl group-hover:scale-110 transition-transform">🏠</span>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Recent Groups -->
+    {% if recent_groups %}
+    <div class="glass-effect rounded-xl p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">📋 Recent Groups</h3>
+        <div class="space-y-3">
+            {% for group in recent_groups %}
+            <a href="{{ url_for('admin.view_group', group_id=group._id) }}" class="block p-4 rounded-lg hover:bg-gray-50 transition-colors">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-semibold text-gray-900">{{ group.name }}</p>
+                        <p class="text-sm text-gray-600">Created {{ group.created_at.strftime('%Y-%m-%d') if group.created_at else 'Unknown' }}</p>
+                    </div>
+                    <div>
+                        {% if group.is_premium %}
+                        <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Premium</span>
+                        {% elif not group.is_public %}
+                        <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">Private</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Public</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Recent Users -->
+    {% if recent_users %}
+    <div class="glass-effect rounded-xl p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">👤 Recent Users</h3>
+        <div class="space-y-3">
+            {% for user in recent_users %}
+            <a href="{{ url_for('admin.view_user', user_id=user.discord_id or user._id) }}" class="block p-4 rounded-lg hover:bg-gray-50 transition-colors">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-semibold text-gray-900">{{ user.username }}</p>
+                        <p class="text-sm text-gray-600">Joined {{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'Unknown' }}</p>
+                    </div>
+                    <div class="flex gap-1">
+                        {% if user.is_admin %}
+                        <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">Admin</span>
+                        {% endif %}
+                        {% if user.is_premium %}
+                        <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Premium</span>
+                        {% endif %}
+                        {% if user.is_beta %}
+                        <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">Beta</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,374 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Audience Retention Optimization - Nicole AI{% endblock %}
+
+{% block page_title %}Audience Retention Optimization{% endblock %}
+{% block page_description %}Analyze retention data and optimize your content for better audience engagement{% endblock %}
+
+{% block content %}
+<div x-data="retentionOptimization()">
+    <!-- Setup Wizard -->
+    <div x-show="currentStep === 'setup'" class="max-w-4xl mx-auto">
+        <!-- Step Indicator -->
+        <div class="flex items-center justify-center mb-8">
+            <div class="flex items-center space-x-4">
+                <div :class="step >= 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'" 
+                     class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold">1</div>
+                <div class="w-16 h-1 bg-gray-200"></div>
+                <div :class="step >= 2 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'" 
+                     class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold">2</div>
+                <div class="w-16 h-1 bg-gray-200"></div>
+                <div :class="step >= 3 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'" 
+                     class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold">3</div>
+                <div class="w-16 h-1 bg-gray-200"></div>
+                <div :class="step >= 4 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'" 
+                     class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold">4</div>
+            </div>
+        </div>
+
+        <!-- Step 1: Channel Selection -->
+        <div x-show="step === 1" class="glass-effect rounded-xl p-8">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6 text-center">Select Channel to Optimize</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <template x-for="channel in channels" :key="channel.id">
+                    <div @click="selectChannel(channel)" 
+                         :class="selectedChannel?.id === channel.id ? 'ring-2 ring-indigo-500 bg-indigo-50' : 'hover:bg-gray-50'"
+                         class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer transition-all">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <span class="text-white font-bold" x-text="channel.name.charAt(0)"></span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900" x-text="channel.name"></h4>
+                                <p class="text-sm text-gray-600" x-text="channel.subscribers"></p>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <p>Recent uploads: <span class="font-medium" x-text="channel.recentUploads"></span></p>
+                            <p>Avg. retention: <span class="font-medium" x-text="channel.avgRetention"></span></p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <div class="flex justify-center mt-8">
+                <button @click="nextStep()" :disabled="!selectedChannel" 
+                        :class="selectedChannel ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-300 cursor-not-allowed'"
+                        class="px-6 py-3 text-white rounded-lg transition-colors">
+                    Continue to Series Selection
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Series & Theme Selection -->
+        <div x-show="step === 2" class="glass-effect rounded-xl p-8">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6 text-center">Select Series & Theme</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                    <h4 class="font-semibold text-gray-900 mb-4">Select Series</h4>
+                    <div class="space-y-2 max-h-64 overflow-y-auto">
+                        <template x-for="series in availableSeries" :key="series.id">
+                            <div @click="selectSeries(series)" 
+                                 :class="selectedSeries?.id === series.id ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-200'"
+                                 class="border-2 rounded-lg p-3 cursor-pointer transition-colors">
+                                <h5 class="font-medium text-gray-900" x-text="series.name"></h5>
+                                <p class="text-sm text-gray-600" x-text="series.videoCount + ' videos'"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-900 mb-4">Select Theme</h4>
+                    <div class="space-y-2 max-h-64 overflow-y-auto">
+                        <template x-for="theme in availableThemes" :key="theme.id">
+                            <div @click="selectTheme(theme)" 
+                                 :class="selectedTheme?.id === theme.id ? 'bg-purple-100 border-purple-500' : 'bg-white border-gray-200'"
+                                 class="border-2 rounded-lg p-3 cursor-pointer transition-colors">
+                                <h5 class="font-medium text-gray-900" x-text="theme.name"></h5>
+                                <p class="text-sm text-gray-600" x-text="theme.videoCount + ' videos in series'"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-between mt-8">
+                <button @click="prevStep()" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                    Back
+                </button>
+                <button @click="nextStep()" :disabled="!selectedSeries || !selectedTheme" 
+                        :class="(selectedSeries && selectedTheme) ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-300 cursor-not-allowed'"
+                        class="px-6 py-3 text-white rounded-lg transition-colors">
+                    Upload Videos & Data
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Video Upload -->
+        <div x-show="step === 3" class="glass-effect rounded-xl p-8">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6 text-center">Upload Videos & Retention Data</h3>
+            <div class="space-y-6">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-blue-900 mb-2">📋 Requirements</h4>
+                    <ul class="text-sm text-blue-800 space-y-1">
+                        <li>• Upload at least 3 videos from the same series and theme</li>
+                        <li>• Provide YouTube video URLs (public or unlisted)</li>
+                        <li>• Upload corresponding audience retention CSV files from YouTube Analytics</li>
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <template x-for="(video, index) in videoUploads" :key="index">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                            <h5 class="font-semibold text-gray-900 mb-4" x-text="'Video ' + (index + 1)"></h5>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">YouTube URL</label>
+                                    <input type="url" x-model="video.url" 
+                                           placeholder="https://youtube.com/watch?v=..."
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Retention CSV</label>
+                                    <input type="file" @change="handleFileUpload($event, index)" 
+                                           accept=".csv"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                
+                                <div x-show="video.url && video.csvFile" class="text-green-600 text-sm">
+                                    ✅ Ready for analysis
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-yellow-900 mb-2">💡 How to get retention data:</h4>
+                    <p class="text-sm text-yellow-800">
+                        In YouTube Studio → Analytics → Engagement → Audience retention → Download CSV
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex justify-between mt-8">
+                <button @click="prevStep()" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                    Back
+                </button>
+                <button @click="nextStep()" :disabled="!allVideosReady" 
+                        :class="allVideosReady ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-300 cursor-not-allowed'"
+                        class="px-6 py-3 text-white rounded-lg transition-colors">
+                    Analyze & Optimize
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 4: Analysis -->
+        <div x-show="step === 4" class="glass-effect rounded-xl p-8">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6 text-center">AI Analysis in Progress</h3>
+            <div class="text-center">
+                <div class="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-6"></div>
+                <p class="text-lg text-gray-700 mb-4">Analyzing your content and retention patterns...</p>
+                <div class="bg-gray-100 rounded-lg p-4 max-w-md mx-auto">
+                    <div class="space-y-2 text-sm text-gray-600">
+                        <div class="flex justify-between">
+                            <span>Processing transcripts</span>
+                            <span class="text-green-600">✅</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Analyzing retention data</span>
+                            <span class="text-yellow-600">⏳</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Identifying drop-off points</span>
+                            <span class="text-gray-400">⏸️</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Generating optimizations</span>
+                            <span class="text-gray-400">⏸️</span>
+                        </div>
+                    </div>
+                </div>
+                <button @click="viewResults()" class="mt-6 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    View Results (Demo)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results View -->
+    <div x-show="currentStep === 'results'">
+        <!-- Header -->
+        <div class="glass-effect rounded-xl p-6 mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900">Retention Optimization Results</h3>
+                    <p class="text-gray-600" x-text="'Analysis for ' + selectedChannel?.name + ' - ' + selectedSeries?.name + ' (' + selectedTheme?.name + ')'"></p>
+                </div>
+                <button @click="startOver()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+                    🔄 New Analysis
+                </button>
+            </div>
+        </div>
+
+        <!-- Key Insights -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass-effect rounded-xl p-6">
+                <h4 class="font-semibold text-gray-900 mb-2">Average Retention</h4>
+                <p class="text-3xl font-bold text-blue-600">67.2%</p>
+                <p class="text-sm text-gray-600">+12% improvement potential identified</p>
+            </div>
+            <div class="glass-effect rounded-xl p-6">
+                <h4 class="font-semibold text-gray-900 mb-2">Critical Drop-off</h4>
+                <p class="text-3xl font-bold text-red-600">2:15</p>
+                <p class="text-sm text-gray-600">Most viewers leave at this timestamp</p>
+            </div>
+            <div class="glass-effect rounded-xl p-6">
+                <h4 class="font-semibold text-gray-900 mb-2">Optimization Score</h4>
+                <p class="text-3xl font-bold text-green-600">8.5/10</p>
+                <p class="text-sm text-gray-600">High potential for improvement</p>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="glass-effect rounded-xl p-6 mb-8">
+            <h4 class="text-lg font-bold text-gray-900 mb-6">🎯 AI Recommendations</h4>
+            <div class="space-y-4">
+                <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                    <h5 class="font-semibold text-red-800 mb-2">Critical Issue: Slow Hook (0:00-0:15)</h5>
+                    <p class="text-red-700 text-sm mb-2">68% of viewers drop off in the first 15 seconds due to weak opening.</p>
+                    <p class="text-red-800 font-medium">💡 Recommendation: Start with a compelling question or shocking statistic immediately.</p>
+                </div>
+                
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                    <h5 class="font-semibold text-yellow-800 mb-2">Pacing Issue: Content Lull (2:10-2:30)</h5>
+                    <p class="text-yellow-700 text-sm mb-2">Major drop-off occurs during explanatory segments with no visual engagement.</p>
+                    <p class="text-yellow-800 font-medium">💡 Recommendation: Add dynamic visuals, transitions, or pattern interrupts every 20 seconds.</p>
+                </div>
+                
+                <div class="bg-green-50 border-l-4 border-green-400 p-4">
+                    <h5 class="font-semibold text-green-800 mb-2">Strong Performance: Storytelling Segments (4:20-5:45)</h5>
+                    <p class="text-green-700 text-sm mb-2">93% retention during personal story and case study examples.</p>
+                    <p class="text-green-800 font-medium">💡 Recommendation: Include more storytelling elements and real examples throughout.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Updated Guidelines -->
+        <div class="glass-effect rounded-xl p-6">
+            <h4 class="text-lg font-bold text-gray-900 mb-6">📋 Updated Content Guidelines</h4>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p class="text-blue-900 font-medium mb-3">These guidelines have been automatically updated based on your retention data:</p>
+                <div class="space-y-2 text-sm text-blue-800">
+                    <p>• <strong>Hook (0-15s):</strong> Start with shocking statistic or contrarian statement</p>
+                    <p>• <strong>Visual Pacing:</strong> Change visual element every 15-20 seconds maximum</p>
+                    <p>• <strong>Content Structure:</strong> Include personal story every 2-3 minutes</p>
+                    <p>• <strong>Transition Words:</strong> Use "But here's the thing..." and "Here's what's crazy..." for retention spikes</p>
+                    <p>• <strong>Avoid:</strong> Long explanatory segments without visual engagement</p>
+                    <p>• <strong>Pattern Interrupts:</strong> Add sound effects or visual transitions during drops</p>
+                </div>
+            </div>
+            
+            <div class="mt-6 text-center">
+                <button @click="applyGuidelines()" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all">
+                    Apply Guidelines to Future Videos
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function retentionOptimization() {
+    return {
+        currentStep: 'setup',
+        step: 1,
+        selectedChannel: null,
+        selectedSeries: null,
+        selectedTheme: null,
+        videoUploads: [
+            { url: '', csvFile: null },
+            { url: '', csvFile: null },
+            { url: '', csvFile: null }
+        ],
+        
+        channels: [
+            { id: 'ch1', name: 'CryptoMaster Daily', subscribers: '67K', recentUploads: 23, avgRetention: '64%' },
+            { id: 'ch2', name: 'AI Tools Review', subscribers: '34K', recentUploads: 12, avgRetention: '71%' },
+            { id: 'ch4', name: 'Mindset Mastery', subscribers: '156K', recentUploads: 31, avgRetention: '58%' }
+        ],
+        
+        availableSeries: [
+            { id: 's1', name: 'Crypto Daily News', videoCount: 45 },
+            { id: 's2', name: 'DeFi Explained', videoCount: 23 },
+            { id: 's3', name: 'Trading Strategies', videoCount: 31 }
+        ],
+        
+        availableThemes: [
+            { id: 't1', name: 'Market Analysis', videoCount: 12 },
+            { id: 't2', name: 'Breaking News', videoCount: 18 },
+            { id: 't3', name: 'Tutorial Style', videoCount: 8 }
+        ],
+        
+        get allVideosReady() {
+            return this.videoUploads.every(video => video.url && video.csvFile);
+        },
+        
+        selectChannel(channel) {
+            this.selectedChannel = channel;
+        },
+        
+        selectSeries(series) {
+            this.selectedSeries = series;
+        },
+        
+        selectTheme(theme) {
+            this.selectedTheme = theme;
+        },
+        
+        handleFileUpload(event, index) {
+            const file = event.target.files[0];
+            if (file && file.type === 'text/csv') {
+                this.videoUploads[index].csvFile = file;
+            } else {
+                alert('Please upload a CSV file');
+                event.target.value = '';
+            }
+        },
+        
+        nextStep() {
+            if (this.step < 4) {
+                this.step++;
+            }
+        },
+        
+        prevStep() {
+            if (this.step > 1) {
+                this.step--;
+            }
+        },
+        
+        viewResults() {
+            this.currentStep = 'results';
+        },
+        
+        startOver() {
+            this.currentStep = 'setup';
+            this.step = 1;
+            this.selectedChannel = null;
+            this.selectedSeries = null;
+            this.selectedTheme = null;
+            this.videoUploads = [
+                { url: '', csvFile: null },
+                { url: '', csvFile: null },
+                { url: '', csvFile: null }
+            ];
+        },
+        
+        applyGuidelines() {
+            alert('Guidelines have been applied to your content creation workflow!');
+        }
+    }
+}
+</script>
+{% endblock %}

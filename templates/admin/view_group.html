@@ -1,0 +1,162 @@
+{% extends 'modern_admin_base.html' %}
+
+{% block title %}{{ group.name }} - Admin - NICOLE{% endblock %}
+{% block page_title %}{{ group.name }}{% endblock %}
+{% block page_description %}
+    {% if group.is_premium %}Premium Group - ${{ group.price }}
+    {% elif not group.is_public %}Private Group
+    {% else %}Public Group{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Group Settings -->
+    <div class="glass-effect rounded-xl p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-6">⚙️ Group Settings</h3>
+        <form method="post" action="{{ url_for('admin.edit_group', group_id=group._id) }}">
+            <div class="space-y-4">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Group Name</label>
+                    <input type="text" id="name" name="name" value="{{ group.name }}" required
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="is_public" class="block text-sm font-medium text-gray-700 mb-2">Visibility</label>
+                        <select id="is_public" name="is_public" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                            <option value="true" {% if group.is_public %}selected{% endif %}>🌐 Public</option>
+                            <option value="false" {% if not group.is_public %}selected{% endif %}>🔒 Private</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="is_premium" class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                        <select id="is_premium" name="is_premium" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                            <option value="false" {% if not group.is_premium %}selected{% endif %}>Free</option>
+                            <option value="true" {% if group.is_premium %}selected{% endif %}>💎 Premium</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Price (if premium)</label>
+                        <input type="number" id="price" name="price" value="{{ group.price or 0 }}" step="0.01" min="0"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label for="whop_product_id" class="block text-sm font-medium text-gray-700 mb-2">Whop Product ID</label>
+                        <input type="text" id="whop_product_id" name="whop_product_id" value="{{ group.whop_product_id or '' }}" placeholder="Optional"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-600 hover:to-emerald-700 transition-all">
+                        💾 Save Changes
+                    </button>
+                    <button type="button" onclick="confirmDelete()" 
+                            class="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all">
+                        🗑️ Delete
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Statistics -->
+    <div class="glass-effect rounded-xl p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-6">📊 Statistics</h3>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-blue-50 rounded-lg p-4 text-center">
+                <p class="text-3xl font-bold text-blue-600">{{ group.competitors|length if group.competitors else 0 }}</p>
+                <p class="text-sm text-gray-600">Competitors</p>
+            </div>
+            <div class="bg-green-50 rounded-lg p-4 text-center">
+                <p class="text-3xl font-bold text-green-600">{{ group.subscribers|length if group.subscribers else 0 }}</p>
+                <p class="text-sm text-gray-600">Subscribers</p>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-4 text-center">
+                <p class="text-3xl font-bold text-purple-600">{{ group.series|length if group.series else 0 }}</p>
+                <p class="text-sm text-gray-600">Series</p>
+            </div>
+            <div class="bg-yellow-50 rounded-lg p-4 text-center">
+                <p class="text-sm font-bold text-yellow-600">{{ group.created_at.strftime('%Y-%m-%d') if group.created_at else 'Unknown' }}</p>
+                <p class="text-sm text-gray-600">Created</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subscribers -->
+{% if subscribers %}
+<div class="glass-effect rounded-xl p-6 mb-8">
+    <h3 class="text-xl font-bold text-gray-900 mb-6">👥 Subscribers ({{ subscribers|length }})</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {% for subscriber in subscribers %}
+        <div class="border border-gray-200 rounded-lg p-4 bg-white">
+            <h4 class="font-semibold text-gray-900 mb-2">{{ subscriber.username }}</h4>
+            <p class="text-xs text-gray-600 mb-3"><code>{{ subscriber.discord_id }}</code></p>
+            <div class="flex gap-1 mb-3">
+                {% if subscriber.is_premium %}
+                <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Premium</span>
+                {% endif %}
+                {% if subscriber.is_beta %}
+                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">Beta</span>
+                {% endif %}
+            </div>
+            <a href="{{ url_for('admin.view_user', user_id=subscriber.discord_id) }}" 
+               class="block text-center px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium">
+                View User
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Competitors -->
+{% if group.competitors %}
+<div class="glass-effect rounded-xl p-6">
+    <h3 class="text-xl font-bold text-gray-900 mb-6">🔥 Competitors</h3>
+    <div class="space-y-3">
+        {% for competitor in group.competitors %}
+        <div class="border border-gray-200 rounded-lg p-4 bg-white flex items-center justify-between">
+            <div>
+                <p class="font-semibold text-gray-900">{{ competitor.channel_name or 'Unknown' }}</p>
+                <p class="text-sm text-gray-600"><code class="text-xs">{{ competitor.channel_id }}</code></p>
+            </div>
+            <span class="text-sm text-gray-500">{{ competitor.added_at.strftime('%Y-%m-%d') if competitor.added_at else 'Unknown' }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Delete Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 max-w-md mx-4 shadow-2xl">
+        <h3 class="text-xl font-bold text-red-600 mb-4">⚠️ Confirm Deletion</h3>
+        <p class="text-gray-700 mb-2">Are you sure you want to delete <strong>{{ group.name }}</strong>?</p>
+        <p class="text-red-600 text-sm mb-6">⚠️ This action cannot be undone! All subscribers will lose access.</p>
+        <form method="post" action="{{ url_for('admin.delete_group', group_id=group._id) }}" class="flex gap-3">
+            <button type="button" onclick="document.getElementById('deleteModal').classList.add('hidden')" 
+                    class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">
+                Cancel
+            </button>
+            <button type="submit" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">
+                🗑️ Delete Group
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function confirmDelete() {
+    document.getElementById('deleteModal').classList.remove('hidden');
+    document.getElementById('deleteModal').classList.add('flex');
+}
+</script>
+
+{% endblock %}

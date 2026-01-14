@@ -1,0 +1,175 @@
+{% extends "modern_base.html" %}
+
+{% block title %}CPA Network Setup Guide - Nicole AI{% endblock %}
+{% block page_title %}CPA Network Setup Guide{% endblock %}
+{% block page_description %}Learn how to find offer IDs and create tracking URLs{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="glass-effect rounded-xl p-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">CPA Network Integration Guide</h1>
+        
+        <!-- What is CPA -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">What is a CPA Network?</h2>
+            <p class="text-gray-700 mb-4">
+                CPA (Cost Per Action) networks connect advertisers with publishers. When someone clicks your link and completes an action (sign-up, purchase, etc.), you get paid.
+            </p>
+            <div class="bg-blue-50 rounded-lg p-4">
+                <p class="text-sm text-gray-700">
+                    <strong>Popular CPA Networks:</strong> Glitchy, MaxBounty, CPAlead, OfferVault, PeerFly
+                </p>
+            </div>
+        </section>
+        
+        <!-- Finding Offer ID -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Finding Your Offer ID</h2>
+            <div class="space-y-4">
+                <div class="bg-indigo-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">Step 1: Log into Your CPA Network</h3>
+                    <p class="text-sm text-gray-700 mb-2">Go to your CPA network dashboard (e.g., Glitchy.ai, MaxBounty.com)</p>
+                </div>
+                
+                <div class="bg-indigo-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">Step 2: Browse Available Offers</h3>
+                    <p class="text-sm text-gray-700 mb-2">Look for sections like:</p>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1 ml-4">
+                        <li>"Offers" or "Offer Wall"</li>
+                        <li>"Available Offers"</li>
+                        <li>"Marketplace"</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-indigo-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">Step 3: Find the Offer ID</h3>
+                    <p class="text-sm text-gray-700 mb-2">The offer ID is usually displayed as:</p>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1 ml-4">
+                        <li><strong>Offer ID:</strong> Usually a number (e.g., 12345)</li>
+                        <li><strong>Offer Code:</strong> Sometimes an alphanumeric code</li>
+                        <li>Look in the offer details or URL when you click "Get Link"</li>
+                    </ul>
+                    <div class="mt-3 bg-white rounded p-3 text-xs font-mono">
+                        Example: Offer ID: <code class="bg-gray-100 px-2 py-1 rounded">160550</code>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Creating Tracking URL -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Creating Your Tracking URL</h2>
+            <div class="space-y-4">
+                <div class="bg-green-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">Method 1: From CPA Network Dashboard</h3>
+                    <ol class="list-decimal list-inside text-sm text-gray-700 space-y-2 ml-2">
+                        <li>Click on the offer you want to promote</li>
+                        <li>Click "Get Link" or "Generate Tracking Link"</li>
+                        <li>Copy the generated tracking URL</li>
+                        <li>This URL already includes your affiliate ID and tracking parameters</li>
+                    </ol>
+                </div>
+                
+                <div class="bg-green-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">Method 2: Manual URL Construction</h3>
+                    <p class="text-sm text-gray-700 mb-2">Some networks require you to build the URL manually:</p>
+                    <div class="bg-white rounded p-3 text-xs font-mono mb-2">
+                        <code>https://network.com/offer/[OFFER_ID]?aff_id=[YOUR_AFFILIATE_ID]&sub1=[TRACKING_ID]</code>
+                    </div>
+                    <p class="text-xs text-gray-600">
+                        Replace <code class="bg-gray-100 px-1 rounded">[OFFER_ID]</code> with your offer ID, 
+                        <code class="bg-gray-100 px-1 rounded">[YOUR_AFFILIATE_ID]</code> with your affiliate ID from the network,
+                        and optionally add <code class="bg-gray-100 px-1 rounded">sub1</code> for campaign tracking.
+                    </p>
+                </div>
+                
+                <div class="bg-yellow-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">💡 Pro Tips</h3>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1 ml-4">
+                        <li><strong>Use sub-IDs:</strong> Add <code class="bg-gray-100 px-1 rounded text-xs">sub1=campaign-name</code> to track which campaigns perform best</li>
+                        <li><strong>Test the link:</strong> Always click your tracking URL to make sure it redirects correctly</li>
+                        <li><strong>Save backups:</strong> Keep your tracking URLs in a spreadsheet for easy access</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Glitchy Specific -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Glitchy.ai Specific Instructions</h2>
+            <div class="bg-purple-50 rounded-lg p-4">
+                <ol class="list-decimal list-inside text-sm text-gray-700 space-y-2 ml-2">
+                    <li>Log into your Glitchy account</li>
+                    <li>Go to the "Offers" section</li>
+                    <li>Browse available offers or use the search</li>
+                    <li>Click on an offer to see details</li>
+                    <li>Find the <strong>Offer ID</strong> in the offer details (usually shown as a number)</li>
+                    <li>Click "Get Link" or "Generate Tracking Link"</li>
+                    <li>Copy the full tracking URL provided</li>
+                </ol>
+                <div class="mt-4 bg-white rounded p-3 text-xs">
+                    <p class="font-semibold mb-1">Example Glitchy Offer ID:</p>
+                    <code class="bg-gray-100 px-2 py-1 rounded">160550</code>
+                    <p class="mt-2 text-gray-600">This would appear in your referral link: <code class="bg-gray-100 px-1 rounded">https://app.glitchy.ai/sign-up?rid=160550</code></p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Adding to Nicole -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Adding to Nicole AI</h2>
+            <div class="space-y-4">
+                <div class="bg-indigo-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">Step 1: Go to Products</h3>
+                    <p class="text-sm text-gray-700">Navigate to <a href="/products" class="text-indigo-600 hover:underline">Products</a> in the sidebar</p>
+                </div>
+                
+                <div class="bg-indigo-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">Step 2: Add Product</h3>
+                    <p class="text-sm text-gray-700">Click "Add Product" and fill in:</p>
+                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1 ml-4 mt-2">
+                        <li><strong>Product Name:</strong> Name of the offer/product</li>
+                        <li><strong>Product URL:</strong> The original product URL (not tracking URL)</li>
+                        <li><strong>CPA Network:</strong> e.g., "Glitchy"</li>
+                        <li><strong>CPA Offer ID:</strong> The offer ID from your network (e.g., 160550)</li>
+                        <li><strong>Tracking URL:</strong> Your full tracking link from the network</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-indigo-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">Step 3: Use in Campaigns</h3>
+                    <p class="text-sm text-gray-700">When creating a campaign, select your saved product. Nicole will automatically use your tracking URL for all promotions.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Troubleshooting -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-4">Troubleshooting</h2>
+            <div class="space-y-3">
+                <div class="bg-red-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-1">Can't find Offer ID?</h3>
+                    <p class="text-sm text-gray-700">Check the URL when you click "Get Link" - the offer ID is often in the URL parameters</p>
+                </div>
+                
+                <div class="bg-red-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-1">Tracking URL not working?</h3>
+                    <p class="text-sm text-gray-700">Make sure you copied the full URL including all parameters. Test it in an incognito window.</p>
+                </div>
+                
+                <div class="bg-red-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-1">Need help with a specific network?</h3>
+                    <p class="text-sm text-gray-700">Check your network's documentation or contact their support. Each network has different link formats.</p>
+                </div>
+            </div>
+        </section>
+        
+        <div class="mt-8 text-center">
+            <a href="/products" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold">
+                Go to Products →
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

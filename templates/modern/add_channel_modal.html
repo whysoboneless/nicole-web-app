@@ -1,0 +1,488 @@
+<!-- Multi-Step Add Channel Modal -->
+<div x-data="addChannelModal()" 
+     x-show="showModal" 
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-200"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+     @click.self="closeModal()"
+     style="display: none;"
+     x-cloak>
+    
+    <div class="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">Add YouTube Channel</h2>
+            <button @click="closeModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Progress Steps -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center flex-1">
+                <div :class="currentStep >= 1 ? 'bg-indigo-600 text-white' : 'bg-gray-300 text-gray-600'" 
+                     class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">1</div>
+                <div :class="currentStep >= 2 ? 'bg-indigo-600' : 'bg-gray-300'" class="flex-1 h-1 mx-2"></div>
+            </div>
+            <div class="flex items-center flex-1">
+                <div :class="currentStep >= 2 ? 'bg-indigo-600 text-white' : 'bg-gray-300 text-gray-600'" 
+                     class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">2</div>
+                <div :class="currentStep >= 3 ? 'bg-indigo-600' : 'bg-gray-300'" class="flex-1 h-1 mx-2"></div>
+            </div>
+            <div :class="currentStep >= 3 ? 'bg-indigo-600 text-white' : 'bg-gray-300 text-gray-600'" 
+                 class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">3</div>
+        </div>
+        
+        <!-- Step 1: Connect YouTube Account -->
+        <div x-show="currentStep === 1" class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Select YouTube Channel</h3>
+            <p class="text-sm text-gray-600 mb-6">Select an existing channel or connect a new one</p>
+            
+            <!-- Existing Channels -->
+            <div x-show="connectedChannels.length > 0" class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Select Existing Channel</label>
+                <select x-model="selectedChannelId" 
+                        @change="selectExistingChannel()"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="">-- Select a channel --</option>
+                    <template x-for="channel in connectedChannels" :key="channel.id">
+                        <option :value="channel.id" x-text="channel.name"></option>
+                    </template>
+                </select>
+            </div>
+            
+            <!-- Or Connect New -->
+            <div class="border-t border-gray-200 pt-4">
+                <p class="text-sm text-gray-600 mb-3">Or connect a new channel:</p>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                        <div class="flex-1">
+                            <input type="text" 
+                                   x-model="channelUrl" 
+                                   placeholder="Enter YouTube channel URL"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                        <button @click="connectYouTube()" 
+                                :disabled="connecting || !channelUrl"
+                                :class="(connecting || !channelUrl) ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'"
+                                class="px-4 py-2 text-white rounded-lg font-medium transition-colors">
+                            <span x-show="!connecting">Connect</span>
+                            <span x-show="connecting">Connecting...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-6">
+                <button @click="closeModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                    Cancel
+                </button>
+                <button @click="nextStep()" 
+                        :disabled="!connectedChannelId"
+                        :class="connectedChannelId ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-300 cursor-not-allowed'"
+                        class="px-4 py-2 text-white rounded-lg font-medium transition-colors">
+                    Next →
+                </button>
+            </div>
+        </div>
+        
+        <!-- Step 2: Group & Content Style Selection -->
+        <div x-show="currentStep === 2" class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Content Strategy</h3>
+            
+            <!-- Option 1: Use Discovered Channel (from campaign discovery) -->
+            <div x-show="discoveredGroups.length > 0" class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Use Discovered Channel</label>
+                <select x-model="selectedGroupId" 
+                        @change="loadGroupData()"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="">Select a discovered channel...</option>
+                    <template x-for="group in discoveredGroups" :key="group.id">
+                        <option :value="group.id" x-text="group.name"></option>
+                    </template>
+                </select>
+            </div>
+            
+            <!-- Option 2: Use Campaign Default -->
+            <div class="border-2 rounded-lg p-4 cursor-pointer transition-colors"
+                 :class="strategySource === 'campaign_default' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'"
+                 @click="strategySource = 'campaign_default'">
+                <div class="flex items-start space-x-3">
+                    <input type="radio" :checked="strategySource === 'campaign_default'" 
+                           @change="strategySource = 'campaign_default'"
+                           class="mt-1 w-5 h-5 text-indigo-600">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 mb-2">Use Campaign Default</h3>
+                        <p class="text-sm text-gray-600">Auto-detected from product research</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Option 3: Existing Group + Content Style -->
+            <div class="border-2 rounded-lg p-4 cursor-pointer transition-colors"
+                 :class="strategySource === 'group_assigned' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'"
+                 @click="strategySource = 'group_assigned'">
+                <div class="flex items-start space-x-3">
+                    <input type="radio" :checked="strategySource === 'group_assigned'"
+                           @change="strategySource = 'group_assigned'"
+                           class="mt-1 w-5 h-5 text-indigo-600">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 mb-2">Use Existing Group + Content Style</h3>
+                        
+                        <div x-show="strategySource === 'group_assigned'" class="space-y-4 mt-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Group</label>
+                                <select x-model="selectedGroupId" 
+                                        @change="loadGroupData()"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                    <option value="">Select a group...</option>
+                                    <template x-for="group in userGroups" :key="group.id">
+                                        <option :value="group.id" x-text="group.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Content Style</label>
+                                <select x-model="selectedContentStyleId"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                        :disabled="!selectedGroupId">
+                                    <option value="">Select a content style...</option>
+                                    <template x-for="style in availableContentStyles" :key="style.id">
+                                        <option :value="style.id" x-text="style.display_name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-between space-x-3 mt-6">
+                <button @click="prevStep()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                    ← Back
+                </button>
+                <button @click="nextStep()" 
+                        :disabled="!isStrategyValid()"
+                        :class="isStrategyValid() ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-300 cursor-not-allowed'"
+                        class="px-4 py-2 text-white rounded-lg font-medium transition-colors">
+                    Next →
+                </button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Channel Settings -->
+        <div x-show="currentStep === 3" class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Channel Settings</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Upload Frequency</label>
+                    <select x-model="channelSettings.uploadFrequency" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="daily">Daily</option>
+                        <option value="every_other_day">Every Other Day</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="biweekly">Bi-Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Voice</label>
+                    <select x-model="channelSettings.voice" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="af_nicole">Nicole (Default)</option>
+                        <option value="af_bella">Bella</option>
+                        <option value="af_antoni">Antoni</option>
+                        <option value="af_arnold">Arnold</option>
+                        <!-- Add more voices as needed -->
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Video Duration (minutes)</label>
+                    <input type="number" x-model="channelSettings.videoDuration" 
+                           min="5" max="60" value="30"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+            
+            <div class="flex justify-between space-x-3 mt-6">
+                <button @click="prevStep()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                    ← Back
+                </button>
+                <button @click="saveChannel()" 
+                        :disabled="saving"
+                        :class="saving ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'"
+                        class="px-4 py-2 text-white rounded-lg font-medium transition-colors">
+                    <span x-show="!saving">Save Channel</span>
+                    <span x-show="saving">Saving...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function addChannelModal() {
+    return {
+        showModal: false,
+        currentStep: 1,
+        connecting: false,
+        saving: false,
+        connectedChannel: null,
+        connectedChannelId: null,
+        connectedChannels: [],
+        channelUrl: '',
+        strategySource: 'campaign_default', // 'campaign_default', 'group_assigned', 'discovered'
+        selectedGroupId: null,
+        selectedContentStyleId: null,
+        discoveredGroups: [],
+        userGroups: [],
+        availableContentStyles: [],
+        channelSettings: {
+            uploadFrequency: 'daily',
+            voice: 'af_nicole',
+            videoDuration: 30
+        },
+        
+        init() {
+            // Load discovered groups from campaign
+            this.loadDiscoveredGroups();
+            // Load user groups
+            this.loadUserGroups();
+            // Load connected channels
+            this.loadConnectedChannels();
+            // Listen for modal open event
+            document.addEventListener('showAddChannelModal', () => {
+                this.showModal = true;
+                this.currentStep = 1;
+                this.reset();
+            });
+        },
+        
+        reset() {
+            this.currentStep = 1;
+            this.connectedChannel = null;
+            this.connectedChannelId = null;
+            this.selectedChannelId = null;
+            this.channelUrl = '';
+            this.strategySource = 'campaign_default';
+            this.selectedGroupId = null;
+            this.selectedContentStyleId = null;
+            this.loadConnectedChannels();
+        },
+        
+        async loadConnectedChannels() {
+            try {
+                const response = await fetch('/api/channels');
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        this.connectedChannels = (result.channels || []).map(ch => ({
+                            id: ch.channel_id || ch.youtube_channel_id,
+                            name: ch.channel_name || ch.title || 'Unknown'
+                        }));
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading connected channels:', error);
+            }
+        },
+        
+        selectExistingChannel() {
+            if (this.selectedChannelId) {
+                const channel = this.connectedChannels.find(c => c.id === this.selectedChannelId);
+                if (channel) {
+                    this.connectedChannel = channel.name;
+                    this.connectedChannelId = channel.id;
+                }
+            }
+        },
+        
+        async loadDiscoveredGroups() {
+            try {
+                const campaignId = window.campaignId || '{{ campaign._id }}';
+                const response = await fetch(`/campaigns/${campaignId}/discovered-groups`);
+                if (response.ok) {
+                    const data = await response.json();
+                    this.discoveredGroups = data.groups || [];
+                }
+            } catch (error) {
+                console.error('Error loading discovered groups:', error);
+            }
+        },
+        
+        async loadUserGroups() {
+            try {
+                const response = await fetch('/api/groups');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.userGroups = data.groups || [];
+                }
+            } catch (error) {
+                console.error('Error loading user groups:', error);
+            }
+        },
+        
+        async connectYouTube() {
+            if (!this.channelUrl) {
+                alert('Please enter a YouTube channel URL');
+                return;
+            }
+            
+            this.connecting = true;
+            try {
+                // Get OAuth URL from server
+                const response = await fetch('/api/channels/connect', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({channel_url: this.channelUrl})
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.oauth_url) {
+                    // Show OAuth instructions
+                    const authCode = prompt(
+                        'Authorization Steps:\n' + 
+                        result.instructions.join('\n') + 
+                        '\n\nClick OK to open the authorization page, then paste the code here:'
+                    );
+                    
+                    if (authCode) {
+                        // Complete authorization
+                        await this.completeAuthorization(result.channel_info.id, result.channel_info.title, authCode);
+                    }
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to get OAuth URL'));
+                }
+            } catch (error) {
+                alert('Error connecting YouTube: ' + error.message);
+            } finally {
+                this.connecting = false;
+            }
+        },
+        
+        async completeAuthorization(channelId, channelTitle, authCode) {
+            try {
+                const response = await fetch('/api/channels/authorize', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        auth_code: authCode,
+                        channel_id: channelId,
+                        channel_title: channelTitle
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.connectedChannel = channelTitle;
+                    this.connectedChannelId = channelId;
+                    // Reload connected channels
+                    await this.loadConnectedChannels();
+                    alert('Channel connected successfully!');
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to authorize'));
+                }
+            } catch (error) {
+                alert('Error completing authorization: ' + error.message);
+            }
+        },
+        
+        async loadGroupData() {
+            if (!this.selectedGroupId) return;
+            
+            try {
+                const response = await fetch(`/api/groups/${this.selectedGroupId}/content-styles`);
+                if (response.ok) {
+                    const data = await response.json();
+                    this.availableContentStyles = data.content_styles || [];
+                }
+            } catch (error) {
+                console.error('Error loading group data:', error);
+            }
+        },
+        
+        isStrategyValid() {
+            if (this.strategySource === 'campaign_default') return true;
+            if (this.strategySource === 'group_assigned') {
+                return this.selectedGroupId && this.selectedContentStyleId;
+            }
+            if (this.strategySource === 'discovered') {
+                return this.selectedGroupId;
+            }
+            return false;
+        },
+        
+        nextStep() {
+            if (this.currentStep < 3) {
+                this.currentStep++;
+            }
+        },
+        
+        prevStep() {
+            if (this.currentStep > 1) {
+                this.currentStep--;
+            }
+        },
+        
+        async saveChannel() {
+            this.saving = true;
+            try {
+                const campaignId = window.campaignId || '{{ campaign._id }}';
+                const payload = {
+                    channel_id: this.connectedChannelId,
+                    channel_name: this.connectedChannel,
+                    platform: 'youtube',
+                    content_strategy: {
+                        source: this.strategySource,
+                        group_id: this.selectedGroupId,
+                        content_style_id: this.selectedContentStyleId
+                    },
+                    upload_frequency: this.channelSettings.uploadFrequency,
+                    voice: this.channelSettings.voice,
+                    video_duration: this.channelSettings.videoDuration
+                };
+                
+                const response = await fetch(`/campaigns/${campaignId}/add-channel`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Channel added successfully!');
+                    this.closeModal();
+                    location.reload();
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to add channel'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                this.saving = false;
+            }
+        },
+        
+        closeModal() {
+            this.showModal = false;
+            this.reset();
+        }
+    };
+}
+</script>
+

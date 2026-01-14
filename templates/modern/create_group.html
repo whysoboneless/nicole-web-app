@@ -1,0 +1,496 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Create New Project - Nicole AI{% endblock %}
+
+{% block page_title %}🚀 Create New Project{% endblock %}
+{% block page_description %}Launch your next profitable market intelligence project{% endblock %}
+
+{% block extra_head %}
+<style>
+    .glass-effect { 
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+    .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .feature-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
+    .progress-ring { stroke-dasharray: 283; stroke-dashoffset: 283; transition: stroke-dashoffset 0.5s ease-in-out; }
+    .neon-glow { box-shadow: 0 0 20px rgba(102, 126, 234, 0.3); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50" x-data="createProject()">
+    
+    <!-- Hero Section -->
+    <div class="relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-purple-500/5 to-pink-500/5"></div>
+        <div class="relative max-w-7xl mx-auto px-6 py-16">
+            <div class="text-center mb-12">
+                <h1 class="text-5xl font-black text-gray-900 mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                    🚀 Launch New Project
+                </h1>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+                    Turn any YouTube niche into a profitable automated empire. Research, analyze, and dominate with AI-powered market intelligence.
+                </p>
+                
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                    <div class="glass-effect rounded-xl p-6">
+                        <div class="text-2xl font-bold text-green-600">$15K-50K</div>
+                        <div class="text-sm text-gray-600">Monthly Revenue Potential</div>
+                    </div>
+                    <div class="glass-effect rounded-xl p-6">
+                        <div class="text-2xl font-bold text-blue-600">13 min</div>
+                        <div class="text-sm text-gray-600">Average Setup Time</div>
+                    </div>
+                    <div class="glass-effect rounded-xl p-6">
+                        <div class="text-2xl font-bold text-purple-600">All</div>
+                        <div class="text-sm text-gray-600">Competitors Found</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Creation Flow -->
+    <div class="max-w-6xl mx-auto px-6 pb-16">
+        
+        <!-- Step Indicator -->
+        <div class="glass-effect rounded-xl p-6 mb-8" x-show="currentStep > 0">
+            <div class="flex items-center justify-center space-x-8">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" 
+                         :class="currentStep >= 1 ? 'bg-gradient-to-r from-indigo-500 to-purple-600' : 'bg-gray-300'">
+                        <span x-show="currentStep > 1">✓</span>
+                        <span x-show="currentStep === 1">1</span>
+                        <span x-show="currentStep < 1">1</span>
+                    </div>
+                    <span class="ml-3 font-semibold" :class="currentStep >= 1 ? 'text-indigo-600' : 'text-gray-500'">Project Setup</span>
+                </div>
+                <div class="w-20 h-1 rounded-full" :class="currentStep >= 2 ? 'bg-gradient-to-r from-indigo-500 to-purple-600' : 'bg-gray-300'"></div>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" 
+                         :class="currentStep >= 2 ? 'bg-gradient-to-r from-indigo-500 to-purple-600' : 'bg-gray-300'">
+                        <span x-show="currentStep > 2">✓</span>
+                        <span x-show="currentStep === 2">2</span>
+                        <span x-show="currentStep < 2">2</span>
+                    </div>
+                    <span class="ml-3 font-semibold" :class="currentStep >= 2 ? 'text-indigo-600' : 'text-gray-500'">Channel Analysis</span>
+                </div>
+                <div class="w-20 h-1 rounded-full" :class="currentStep >= 3 ? 'bg-gradient-to-r from-indigo-500 to-purple-600' : 'bg-gray-300'"></div>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" 
+                         :class="currentStep >= 3 ? 'bg-gradient-to-r from-indigo-500 to-purple-600' : 'bg-gray-300'">
+                        <span x-show="currentStep > 3">✓</span>
+                        <span x-show="currentStep === 3">3</span>
+                        <span x-show="currentStep < 3">3</span>
+                    </div>
+                    <span class="ml-3 font-semibold" :class="currentStep >= 3 ? 'text-indigo-600' : 'text-gray-500'">Launch Project</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 0: Method Selection -->
+        <div x-show="currentStep === 0" class="space-y-8" x-transition>
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold gradient-text mb-4">Choose Your Launch Method</h2>
+                <p class="text-gray-600 text-lg">How would you like to start your next profitable project?</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Discovery Method -->
+                <div class="glass-effect rounded-2xl p-8 card-hover cursor-pointer group" @click="selectMethod('discovery')">
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <span class="text-white text-4xl">🔍</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">AI-Powered Discovery</h3>
+                        <p class="text-gray-600 text-lg mb-6">Let our AI find the most profitable niches and channels for you. Perfect for discovering hidden gems.</p>
+                        
+                        <div class="space-y-3 text-left mb-6">
+                            <div class="flex items-center text-sm text-gray-700">
+                                <span class="text-green-500 mr-2">✓</span>
+                                Automated niche research
+                            </div>
+                            <div class="flex items-center text-sm text-gray-700">
+                                <span class="text-green-500 mr-2">✓</span>
+                                Competitor landscape mapping
+                            </div>
+                            <div class="flex items-center text-sm text-gray-700">
+                                <span class="text-green-500 mr-2">✓</span>
+                                Revenue potential analysis
+                            </div>
+                            <div class="flex items-center text-sm text-gray-700">
+                                <span class="text-green-500 mr-2">✓</span>
+                                Market gap identification
+                            </div>
+                        </div>
+                        
+                        <button class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105">
+                            Start Discovery Mission
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Direct Analysis Method -->
+                <div class="glass-effect rounded-2xl p-8 card-hover cursor-pointer group" @click="selectMethod('direct')">
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl mx-auto mb-6 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <span class="text-white text-4xl">🎯</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">Target Specific Channel</h3>
+                        <p class="text-gray-600 text-lg mb-6">Already know a winning channel? Analyze it directly and build your empire around proven success.</p>
+                        
+                        <div class="space-y-3 text-left mb-6">
+                            <div class="flex items-center text-sm text-gray-700">
+                                <span class="text-green-500 mr-2">✓</span>
+                                Deep channel analysis
+                            </div>
+                            <div class="flex items-center text-sm text-gray-700">
+                                <span class="text-green-500 mr-2">✓</span>
+                                Content pattern extraction
+                            </div>
+                            <div class="flex items-center text-sm text-gray-700">
+                                <span class="text-green-500 mr-2">✓</span>
+                                Performance metrics breakdown
+                            </div>
+                            <div class="flex items-center text-sm text-gray-700">
+                                <span class="text-green-500 mr-2">✓</span>
+                                Series & theme identification
+                            </div>
+                        </div>
+                        
+                        <button class="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white py-4 rounded-xl font-semibold hover:from-purple-600 hover:to-purple-700 transition-all transform hover:scale-105">
+                            Analyze Target Channel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 1: Simple Project Setup -->
+        <div x-show="currentStep === 1" class="max-w-2xl mx-auto" x-transition>
+            <div class="glass-effect rounded-2xl p-8">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold gradient-text mb-4">Create Your Project</h2>
+                    <p class="text-gray-600 text-lg">Just two simple fields - that's it!</p>
+                </div>
+                
+                <div class="space-y-6">
+                    <!-- Project Name -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">Project Name</label>
+                        <input type="text" 
+                               x-model="projectData.name"
+                               placeholder="e.g., 'Crypto Empire' or 'AI Tools Niche'"
+                               class="w-full px-6 py-4 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-lg">
+                        <p class="text-sm text-gray-500 mt-2">Name your competitive intelligence project</p>
+                    </div>
+                    
+                    <!-- Channel URL (Direct Method Only) -->
+                    <div x-show="selectedMethod === 'direct'">
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">YouTube Channel URL</label>
+                        <input type="url" 
+                               x-model="projectData.channelUrl"
+                               placeholder="https://www.youtube.com/@channelname"
+                               class="w-full px-6 py-4 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-lg">
+                        <p class="text-sm text-gray-500 mt-2">Nicole will analyze this channel and find all similar competitors</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between mt-8">
+                    <button @click="currentStep = 0" class="px-8 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+                        ← Back
+                    </button>
+                    <button @click="proceedToAnalysis()" 
+                            :disabled="!projectData.name || (selectedMethod === 'direct' && !projectData.channelUrl)"
+                            :class="(!projectData.name || (selectedMethod === 'direct' && !projectData.channelUrl)) ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700'"
+                            class="px-8 py-3 text-white rounded-xl font-semibold transition-all">
+                        Start Analysis →
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 2: Analysis in Progress -->
+        <div x-show="currentStep === 2" class="max-w-4xl mx-auto" x-transition>
+            <div class="glass-effect rounded-2xl p-12 text-center">
+                <div class="mb-8">
+                    <div class="relative w-32 h-32 mx-auto mb-6">
+                        <svg class="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" stroke="rgba(79, 70, 229, 0.1)" stroke-width="8" fill="none"></circle>
+                            <circle cx="50" cy="50" r="45" stroke="url(#gradient)" stroke-width="8" fill="none" 
+                                    class="progress-ring" :style="`stroke-dashoffset: ${283 - (analysisProgress / 100) * 283}`">
+                                <defs>
+                                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                            </circle>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="text-2xl font-bold text-indigo-600" x-text="Math.round(analysisProgress) + '%'"></span>
+                        </div>
+                    </div>
+                    
+                    <h2 class="text-3xl font-bold gradient-text mb-4">AI Analysis in Progress</h2>
+                    <p class="text-gray-600 text-lg mb-8" x-text="currentAnalysisStep"></p>
+                </div>
+                
+                <!-- Analysis Steps -->
+                <div class="space-y-4 max-w-md mx-auto text-left">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" 
+                             :class="analysisProgress >= 25 ? 'bg-green-500 text-white' : 'bg-gray-300'">
+                            <span x-show="analysisProgress >= 25">✓</span>
+                            <span x-show="analysisProgress < 25">1</span>
+                        </div>
+                        <span class="text-sm" :class="analysisProgress >= 25 ? 'text-green-600 font-semibold' : 'text-gray-600'">
+                            Analyzing seed channel content DNA
+                        </span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" 
+                             :class="analysisProgress >= 50 ? 'bg-green-500 text-white' : 'bg-gray-300'">
+                            <span x-show="analysisProgress >= 50">✓</span>
+                            <span x-show="analysisProgress < 50">2</span>
+                        </div>
+                        <span class="text-sm" :class="analysisProgress >= 50 ? 'text-green-600 font-semibold' : 'text-gray-600'">
+                            Finding similar competitor channels
+                        </span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" 
+                             :class="analysisProgress >= 75 ? 'bg-green-500 text-white' : 'bg-gray-300'">
+                            <span x-show="analysisProgress >= 75">✓</span>
+                            <span x-show="analysisProgress < 75">3</span>
+                        </div>
+                        <span class="text-sm" :class="analysisProgress >= 75 ? 'text-green-600 font-semibold' : 'text-gray-600'">
+                            Extracting performance & revenue data
+                        </span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" 
+                             :class="analysisProgress >= 100 ? 'bg-green-500 text-white' : 'bg-gray-300'">
+                            <span x-show="analysisProgress >= 100">✓</span>
+                            <span x-show="analysisProgress < 100">4</span>
+                        </div>
+                        <span class="text-sm" :class="analysisProgress >= 100 ? 'text-green-600 font-semibold' : 'text-gray-600'">
+                            Building competitive intelligence group
+                        </span>
+                    </div>
+                </div>
+                
+                <div x-show="analysisProgress >= 100" class="mt-8 animate-pulse">
+                    <div class="text-green-600 font-semibold mb-4">✅ Analysis Complete!</div>
+                    <button @click="currentStep = 3" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-8 py-3 rounded-xl font-semibold hover:from-green-600 hover:to-green-700 transition-all">
+                        Launch Project →
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 3: Success & Launch -->
+        <div x-show="currentStep === 3" class="max-w-4xl mx-auto" x-transition>
+            <div class="glass-effect rounded-2xl p-12 text-center">
+                <div class="mb-8">
+                    <div class="w-24 h-24 bg-gradient-to-r from-green-500 to-green-600 rounded-full mx-auto mb-6 flex items-center justify-center">
+                        <span class="text-white text-4xl">🎉</span>
+                    </div>
+                    <h2 class="text-4xl font-bold gradient-text mb-4">Project Successfully Created!</h2>
+                    <p class="text-gray-600 text-lg mb-8" x-text="`Your project '${projectData.name}' is now ready for empire building`"></p>
+                </div>
+                
+                <!-- Project Summary -->
+                <div class="feature-card rounded-xl p-8 mb-8 max-w-2xl mx-auto">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">🎯 Project Created Successfully</h3>
+                    <div class="space-y-4 text-sm">
+                        <div class="text-center">
+                            <div class="text-gray-600 mb-1">Project Name</div>
+                            <div class="font-semibold text-lg" x-text="projectData.name"></div>
+                        </div>
+                        <div class="text-center" x-show="projectData.channelUrl">
+                            <div class="text-gray-600 mb-1">Seed Channel</div>
+                            <div class="font-semibold" x-text="projectData.channelUrl"></div>
+                        </div>
+                        <div class="text-center p-4 bg-green-50 rounded-lg">
+                            <div class="text-green-600 font-semibold">✅ All competitor channels found and analyzed</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Next Steps -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <a href="/my_groups" class="feature-card rounded-xl p-6 hover:scale-105 transition-all block">
+                        <div class="text-3xl mb-3">📊</div>
+                        <div class="font-semibold text-gray-900 mb-2">View Intelligence</div>
+                        <div class="text-sm text-gray-600">Explore your market analysis</div>
+                    </a>
+                    <a href="/studio" class="feature-card rounded-xl p-6 hover:scale-105 transition-all block">
+                        <div class="text-3xl mb-3">🎬</div>
+                        <div class="font-semibold text-gray-900 mb-2">Create Content</div>
+                        <div class="text-sm text-gray-600">Start producing videos</div>
+                    </a>
+                    <a href="/campaigns/create" class="feature-card rounded-xl p-6 hover:scale-105 transition-all block">
+                        <div class="text-3xl mb-3">🤖</div>
+                        <div class="font-semibold text-gray-900 mb-2">Setup Automation</div>
+                        <div class="text-sm text-gray-600">Launch your empire</div>
+                    </a>
+                </div>
+                
+                <div class="mt-8">
+                    <button @click="createAnother()" class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-3 rounded-xl font-semibold hover:from-indigo-600 hover:to-purple-700 transition-all mr-4">
+                        Create Another Project
+                    </button>
+                    <a href="/dashboard" class="bg-gray-200 text-gray-700 px-8 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+                        Back to Empire Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function createProject() {
+    return {
+        // Flow state
+        currentStep: 0,
+        selectedMethod: '',
+        
+        // Project data
+        projectData: {
+            name: '',
+            channelUrl: ''
+        },
+        
+        // Analysis state
+        analysisProgress: 0,
+        currentAnalysisStep: 'Initializing analysis...',
+        createdGroupId: null,
+        progressId: null,
+        isRealProgress: false,
+        
+
+        
+        // Method selection
+        selectMethod(method) {
+            this.selectedMethod = method;
+            if (method === 'discovery') {
+                // Redirect to discover page
+                window.location.href = '/discover';
+            } else {
+                this.currentStep = 1;
+            }
+        },
+        
+        // Proceed to analysis
+        async proceedToAnalysis() {
+            if (!this.projectData.name || (this.selectedMethod === 'direct' && !this.projectData.channelUrl)) {
+                return;
+            }
+            
+            this.currentStep = 2;
+            await this.runAnalysis();
+        },
+        
+        // REAL analysis process with backend polling
+        async runAnalysis() {
+            // Start with fake progress for immediate feedback
+            this.analysisProgress = 10;
+            this.currentAnalysisStep = 'Starting analysis...';
+            
+            // Call real API to create project using Discord bot logic
+            try {
+                const response = await fetch('/create_group', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        group_name: this.projectData.name,
+                        channel_url: this.projectData.channelUrl
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('✅ Group creation started:', result.message);
+                    this.progressId = result.progress_id;
+                    this.isRealProgress = true;
+                    
+                    // Start polling for REAL progress
+                    await this.pollRealProgress();
+                } else {
+                    console.error('❌ Failed to create group:', result.error);
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('❌ Error creating group:', error);
+                alert('Network error occurred. Please try again.');
+            }
+        },
+        
+        // Create another project
+        createAnother() {
+            this.currentStep = 0;
+            this.selectedMethod = '';
+            this.projectData = { name: '', channelUrl: '' };
+            this.analysisProgress = 0;
+            this.currentAnalysisStep = 'Initializing analysis...';
+        },
+        
+        async pollRealProgress() {
+            // Poll the backend for REAL progress updates
+            const maxPolls = 60; // 5 minutes max (5 second intervals)
+            let pollCount = 0;
+            
+            const pollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/check-progress/${this.progressId}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Update REAL progress from backend
+                        this.analysisProgress = data.progress;
+                        this.currentAnalysisStep = data.step;
+                        
+                        console.log(`Real progress: ${data.progress}% - ${data.step}`);
+                        
+                        // Check if complete
+                        if (data.status === 'complete' && data.group_id) {
+                            clearInterval(pollInterval);
+                            this.createdGroupId = data.group_id;
+                            
+                            // Show success and redirect
+                            this.currentAnalysisStep = 'Analysis complete! Redirecting...';
+                            setTimeout(() => {
+                                window.location.href = `/competitor-selection?group_id=${data.group_id}`;
+                            }, 2000);
+                        }
+                    } else {
+                        console.error('Progress check failed:', data.error);
+                    }
+                    
+                    pollCount++;
+                    if (pollCount >= maxPolls) {
+                        clearInterval(pollInterval);
+                        alert('Analysis is taking longer than expected. Please check your dashboard.');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error checking progress:', error);
+                }
+            }, 5000); // Poll every 5 seconds
+        },
+        
+        sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    };
+}
+</script>
+{% endblock %}

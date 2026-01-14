@@ -1,0 +1,339 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Select Competitors - Nicole AI{% endblock %}
+
+{% block page_title %}🎯 Competitor Selection{% endblock %}
+{% block page_description %}Choose competitors for your market intelligence project{% endblock %}
+
+{% block content %}
+<div x-data="competitorSelection()" class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    
+    <!-- Header -->
+    <div class="max-w-6xl mx-auto px-6 py-8">
+        <div class="glass-effect rounded-xl p-6 mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Select Competitors</h1>
+                    <p class="text-gray-600" x-text="`Found ${totalCompetitors} potential competitors for your project`"></p>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-gray-600">Selected</div>
+                    <div class="text-2xl font-bold text-indigo-600" x-text="`${selectedCompetitors.size} / ${totalCompetitors}`"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Series Selection -->
+        <div class="glass-effect rounded-xl p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Content Series</h3>
+            <select x-model="currentSeries" @change="updateCurrentCompetitor()" 
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                <option value="">Select a content series...</option>
+                <template x-for="series in Object.keys(potentialCompetitors)" :key="series">
+                    <option :value="series" x-text="`${series} (${potentialCompetitors[series]?.length || 0} competitors)`"></option>
+                </template>
+            </select>
+        </div>
+
+        <!-- Competitor Display -->
+        <div x-show="currentSeries && currentCompetitor" class="glass-effect rounded-xl p-8 mb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Competitor Info -->
+                <div>
+                    <div class="flex items-center space-x-4 mb-6">
+                        <img :src="currentCompetitor?.video?.thumbnails?.high?.url || currentCompetitor?.video?.thumbnails?.default?.url" 
+                             :alt="currentCompetitor?.channel?.title"
+                             class="w-20 h-20 rounded-lg object-cover">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900" x-text="currentCompetitor?.channel?.title"></h3>
+                            <p class="text-gray-600" x-text="formatNumber(currentCompetitor?.channel?.subscriberCount) + ' subscribers'"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <span class="text-sm font-medium text-gray-700">Recent Video:</span>
+                            <p class="text-gray-900" x-text="currentCompetitor?.video?.title"></p>
+                        </div>
+                        <div>
+                            <span class="text-sm font-medium text-gray-700">Published:</span>
+                            <p class="text-gray-600" x-text="formatDate(currentCompetitor?.video?.publishedAt)"></p>
+                        </div>
+                        <div>
+                            <span class="text-sm font-medium text-gray-700">Channel Stats:</span>
+                            <p class="text-gray-600" x-text="`${formatNumber(currentCompetitor?.channel?.videoCount)} videos • ${formatNumber(currentCompetitor?.channel?.viewCount)} total views`"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Preview -->
+                <div>
+                    <div class="aspect-video bg-gray-100 rounded-lg overflow-hidden mb-4">
+                        <img :src="currentCompetitor?.video?.thumbnails?.high?.url || currentCompetitor?.video?.thumbnails?.default?.url" 
+                             :alt="currentCompetitor?.video?.title"
+                             class="w-full h-full object-cover">
+                    </div>
+                    <a :href="`https://www.youtube.com/watch?v=${currentCompetitor?.video?.id}`" 
+                       target="_blank"
+                       class="inline-flex items-center text-indigo-600 hover:text-indigo-700 font-medium">
+                        <span>Watch on YouTube</span>
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation & Actions -->
+        <div x-show="currentSeries" class="flex items-center justify-between mb-8">
+            <div class="flex items-center space-x-4">
+                <button @click="previousCompetitor()" :disabled="currentIndex === 0"
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50 hover:bg-gray-300 transition-colors">
+                    ← Previous
+                </button>
+                <span class="text-gray-600" x-text="`${currentIndex + 1} of ${getCurrentSeriesCompetitors().length}`"></span>
+                <button @click="nextCompetitor()" :disabled="currentIndex >= getCurrentSeriesCompetitors().length - 1"
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg disabled:opacity-50 hover:bg-gray-300 transition-colors">
+                    Next →
+                </button>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <button @click="toggleCompetitor()" 
+                        :disabled="isCurrentCompetitorAlreadyInGroup()"
+                        :class="isCurrentCompetitorAlreadyInGroup() ? 'bg-gray-400 cursor-not-allowed' : (isCurrentCompetitorSelected() ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700')"
+                        class="px-6 py-2 text-white rounded-lg font-medium transition-colors disabled:opacity-75">
+                    <span x-show="isCurrentCompetitorAlreadyInGroup()">✅ Already in Group</span>
+                    <span x-show="!isCurrentCompetitorAlreadyInGroup()" x-text="isCurrentCompetitorSelected() ? '➖ Remove' : '➕ Add to Group'"></span>
+                </button>
+                <button @click="addAllFromSeries()" 
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
+                    ➕➕ Add All from Series
+                </button>
+            </div>
+        </div>
+
+        <!-- Selected Competitors Summary -->
+        <div x-show="selectedCompetitors.size > 0" class="glass-effect rounded-xl p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Selected Competitors</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <template x-for="competitorId in Array.from(selectedCompetitors)" :key="competitorId">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="font-medium text-green-800" x-text="getCompetitorById(competitorId)?.channel?.title"></div>
+                                <div class="text-sm text-green-600" x-text="formatNumber(getCompetitorById(competitorId)?.channel?.subscriberCount) + ' subs'"></div>
+                            </div>
+                            <button @click="selectedCompetitors.delete(competitorId)" 
+                                    class="text-red-600 hover:text-red-700">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Finish Button -->
+        <div class="text-center">
+            <button @click="finishSelection()" 
+                    :disabled="selectedCompetitors.size < 2"
+                    :class="selectedCompetitors.size < 2 ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'"
+                    class="px-8 py-3 text-white rounded-xl font-semibold transition-all">
+                <span x-show="selectedCompetitors.size < 2">Select at least 2 competitors</span>
+                <span x-show="selectedCompetitors.size >= 2">🏁 Finish & Create Project</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function competitorSelection() {
+    return {
+        // Data from URL params
+        groupId: new URLSearchParams(window.location.search).get('group_id'),
+        potentialCompetitors: {},
+        existingCompetitors: [], // Store existing competitors from the group
+        
+        // Selection state
+        currentSeries: '',
+        currentIndex: 0,
+        selectedCompetitors: new Set(),
+        
+        // Computed
+        get currentCompetitor() {
+            if (!this.currentSeries || !this.potentialCompetitors[this.currentSeries]) return null;
+            return this.potentialCompetitors[this.currentSeries][this.currentIndex];
+        },
+        
+        get totalCompetitors() {
+            return Object.values(this.potentialCompetitors).reduce((sum, competitors) => sum + competitors.length, 0);
+        },
+
+        // Initialize
+        async init() {
+            await this.loadExistingCompetitors();
+            await this.loadCompetitors();
+        },
+
+        async loadExistingCompetitors() {
+            if (!this.groupId) return;
+            
+            try {
+                // Get existing competitors from the group
+                const response = await fetch(`/api/get-group-competitors?group_id=${this.groupId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.existingCompetitors = data.competitors || [];
+                    console.log('Loaded existing competitors:', this.existingCompetitors);
+                }
+            } catch (error) {
+                console.error('Error loading existing competitors:', error);
+                // Don't show alert for this - it's not critical
+            }
+        },
+
+        async loadCompetitors() {
+            try {
+                const response = await fetch(`/api/get-potential-competitors?group_id=${this.groupId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.potentialCompetitors = data.potential_competitors;
+                    console.log('Loaded competitors:', this.potentialCompetitors);
+                } else {
+                    alert('Error loading competitors: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error loading competitors:', error);
+                alert('Failed to load competitors');
+            }
+        },
+
+        // Navigation
+        getCurrentSeriesCompetitors() {
+            return this.potentialCompetitors[this.currentSeries] || [];
+        },
+
+        updateCurrentCompetitor() {
+            this.currentIndex = 0;
+        },
+
+        previousCompetitor() {
+            if (this.currentIndex > 0) {
+                this.currentIndex--;
+            }
+        },
+
+        nextCompetitor() {
+            const competitors = this.getCurrentSeriesCompetitors();
+            if (this.currentIndex < competitors.length - 1) {
+                this.currentIndex++;
+            }
+        },
+
+        // Selection
+        isCurrentCompetitorSelected() {
+            return this.selectedCompetitors.has(this.currentCompetitor?.channel?.id);
+        },
+
+        isCurrentCompetitorAlreadyInGroup() {
+            if (!this.currentCompetitor || !this.currentCompetitor.channel) return false;
+            
+            const currentChannelId = this.currentCompetitor.channel.id;
+            const currentChannelTitle = this.currentCompetitor.channel.title;
+            
+            // Check if this competitor already exists in the group
+            return this.existingCompetitors.some(existing => {
+                const existingId = existing.channel_id || existing.id;
+                const existingTitle = existing.title || existing.channel_title;
+                
+                // Check by channel ID or title
+                return (existingId && existingId === currentChannelId) || 
+                       (existingTitle && existingTitle === currentChannelTitle);
+            });
+        },
+
+        toggleCompetitor() {
+            const competitorId = this.currentCompetitor?.channel?.id;
+            if (this.selectedCompetitors.has(competitorId)) {
+                this.selectedCompetitors.delete(competitorId);
+            } else {
+                this.selectedCompetitors.add(competitorId);
+            }
+        },
+
+        addAllFromSeries() {
+            const competitors = this.getCurrentSeriesCompetitors();
+            competitors.forEach(comp => {
+                this.selectedCompetitors.add(comp.channel.id);
+            });
+        },
+
+        getCompetitorById(competitorId) {
+            for (const series of Object.values(this.potentialCompetitors)) {
+                const competitor = series.find(c => c.channel.id === competitorId);
+                if (competitor) return competitor;
+            }
+            return null;
+        },
+
+        // Finish
+        async finishSelection() {
+            if (this.selectedCompetitors.size < 2) {
+                alert('Please select at least 2 competitors for proper analysis.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/finalize-group', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        group_id: this.groupId,
+                        selected_competitors: Array.from(this.selectedCompetitors)
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ Project created successfully!');
+                    window.location.href = '/dashboard';
+                } else {
+                    alert('Error finalizing project: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error finalizing project:', error);
+                alert('Failed to finalize project');
+            }
+        },
+
+        // Utilities
+        formatNumber(num) {
+            if (!num) return '0';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '';
+            return new Date(dateStr).toLocaleDateString();
+        }
+    };
+}
+</script>
+
+<style>
+.glass-effect { 
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,2283 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Content Studio - Nicole AI{% endblock %}
+
+{% block page_title %}Content Studio{% endblock %}
+{% block page_description %}Create content assets using AI-powered competitive intelligence{% endblock %}
+
+{% block content %}
+<div x-data="contentStudio()">
+    <!-- Pre-selection from URL params -->
+    <div x-show="false" x-init="
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('series')) selectedSeriesName = urlParams.get('series');
+        if (urlParams.get('theme')) selectedThemeName = urlParams.get('theme');
+        if (urlParams.get('group')) selectedProjectId = urlParams.get('group');
+        if (selectedProjectId) autoSelectFromParams();
+    "></div>
+
+        <!-- Stage 1: Project Selection -->
+    <div x-show="currentStage === 'project'" class="max-w-4xl mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Choose Your Project</h1>
+            <p class="text-gray-600">Select the competitive intelligence project you want to create content from</p>
+    </div>
+
+        <div class="glass-effect rounded-xl p-6">
+                {% if user_groups %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for project in user_groups %}
+                    <div class="project-card border-2 border-gray-200 rounded-xl p-6 cursor-pointer hover:border-indigo-500 hover:shadow-lg transition-all"
+                         :class="selectedProject?.id === '{{ project._id }}' ? 'border-indigo-500 bg-indigo-50' : ''"
+                         @click="selectProject({
+                             id: '{{ project._id }}',
+                             name: '{{ project.name or "Unnamed Project" }}',
+                             competitors: {{ project.competitor_channels|length if project.competitor_channels else 0 }}
+                         })">
+                        
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <span class="text-white text-xl">📊</span>
+    </div>
+
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ project.name or "Unnamed Project" }}</h3>
+                                
+                                <div class="space-y-1">
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-600">Competitors</span>
+                                        <span class="font-medium text-gray-900">{{ project.competitor_channels|length if project.competitor_channels else 0 }}</span>
+                            </div>
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-600">Status</span>
+                                        <span class="font-medium text-green-600">Active</span>
+                        </div>
+                    </div>
+                    
+                            {% if project.description %}
+                                <p class="text-sm text-gray-500 mt-3">{{ project.description }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        
+                <div class="text-center mt-8" x-show="selectedProject">
+                    <button @click="loadProjectData()" 
+                            class="px-8 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
+                        Continue →
+                    </button>
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <div class="text-6xl mb-4">🚀</div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">No Projects Found</h3>
+                    <p class="text-gray-600 mb-6">Create your first competitive intelligence project</p>
+                    <a href="/create_group" class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
+                                Create New Project
+                </a>
+            </div>
+            {% endif %}
+            </div>
+        </div>
+
+    <!-- Stage 2: Series & Theme Selection -->
+    <div x-show="currentStage === 'selection'" class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+                    <div>
+                <h1 class="text-2xl font-bold text-gray-900" x-text="'Content Studio - ' + (selectedProject?.name || '')"></h1>
+                <p class="text-gray-600">Choose the series and theme for your content</p>
+                    </div>
+                    <button @click="currentStage = 'project'" class="text-gray-600 hover:text-gray-900 font-medium">
+                        ← Back to Projects
+            </button>
+        </div>
+
+            <!-- Loading State -->
+        <div x-show="loading" class="glass-effect rounded-xl p-12 text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p class="text-gray-600">Loading competitive intelligence...</p>
+    </div>
+
+        <!-- Content Selection -->
+        <div x-show="!loading" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Series Selection -->
+            <div class="glass-effect rounded-xl p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">📺 Select Series</h2>
+                
+                <div x-show="seriesData.length === 0" class="text-center py-8">
+                    <div class="text-4xl mb-3">📊</div>
+                    <p class="text-gray-600">No series data available for this project</p>
+            </div>
+            
+                <div x-show="seriesData.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
+                    <template x-for="(series, index) in seriesData" :key="index">
+                        <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 transition-colors"
+                             :class="selectedSeries?.name === series.name ? 'border-indigo-500 bg-indigo-50' : ''"
+                         @click="selectSeries(series)">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-medium text-gray-900" x-text="series.name"></h3>
+                                    <p class="text-sm text-gray-600" x-text="formatNumber(series.avg_views) + ' avg views • ' + (series.video_count || 0) + ' videos'"></p>
+                        </div>
+                                <div class="text-sm text-indigo-600 font-medium" x-text="(series.themes || []).length + ' themes'"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Theme Selection -->
+            <div class="glass-effect rounded-xl p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">🎨 Select Theme</h2>
+                
+                <div x-show="!selectedSeries" class="text-center py-8">
+                    <div class="text-4xl mb-3">👈</div>
+                    <p class="text-gray-600">Select a series first to see available themes</p>
+            </div>
+            
+                <div x-show="selectedSeries && (!selectedSeries.themes || selectedSeries.themes.length === 0)" class="text-center py-8">
+                    <div class="text-4xl mb-3">🎨</div>
+                    <p class="text-gray-600">No themes available for this series</p>
+                            </div>
+                            
+                <div x-show="selectedSeries && selectedSeries.themes && selectedSeries.themes.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
+                    <template x-for="(theme, index) in (selectedSeries?.themes || [])" :key="index">
+                        <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 transition-colors"
+                             :class="selectedTheme?.name === theme.name ? 'border-indigo-500 bg-indigo-50' : ''"
+                         @click="selectTheme(theme)">
+                            <div class="flex items-start space-x-3">
+                                <!-- Thumbnail -->
+                                <div x-show="getThemeThumbnail(theme)" class="flex-shrink-0">
+                                    <img :src="getThemeThumbnail(theme)" :alt="theme.name" 
+                                         class="w-16 h-12 object-cover rounded border">
+                        </div>
+                                <div x-show="!getThemeThumbnail(theme)" class="w-16 h-12 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                                    <span class="text-gray-400 text-sm">🎨</span>
+                                </div>
+
+                                <!-- Theme Info -->
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-medium text-gray-900" x-text="theme.name"></h3>
+                                    <p class="text-sm text-gray-600" x-text="formatNumber(getThemeAvgViews(theme)) + ' avg views • ' + (theme.video_count || 0) + ' videos'"></p>
+                                </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            </div>
+        </div>
+
+        <!-- Continue Button -->
+        <div class="text-center mt-8" x-show="selectedSeries && selectedTheme">
+            <button @click="startContentCreation()" 
+                    class="px-8 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
+                Create Content →
+            </button>
+        </div>
+    </div>
+
+        <!-- Stage 3: Content Type Selection -->
+    <div x-show="currentStage === 'content-type'" class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="glass-effect rounded-xl p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Choose Content Type</h1>
+                    <p class="text-gray-600">
+                        <span x-text="selectedProject?.name"></span> → 
+                        <span x-text="selectedSeries?.name"></span> → 
+                        <span x-text="selectedTheme?.name"></span>
+                    </p>
+                </div>
+                <button @click="currentStage = 'selection'" class="text-gray-600 hover:text-gray-900 font-medium">
+                    ← Back to Selection
+                                </button>
+                            </div>
+                        </div>
+
+        <!-- Content Type Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Gaming/Improv Type -->
+            <div class="glass-effect rounded-xl p-6 cursor-pointer hover:shadow-lg transition-all border-2"
+                 :class="selectedContentType === 'authentic' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'"
+                 @click="selectContentType('authentic')">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl text-white">🎮</span>
+                        </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Authentic & Spontaneous</h3>
+                    <p class="text-gray-600 mb-4">Perfect for gaming content, vlogs, reactions, and improvised content</p>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4 text-left">
+                        <h4 class="font-medium text-gray-900 mb-2">What you'll get:</h4>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• Title generation or custom title</li>
+                            <li>• Script breakdown & structure</li>
+                            <li>• Plot outline for flow</li>
+                            <li>• Thumbnail generation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fully Scripted Type -->
+            <div class="glass-effect rounded-xl p-6 cursor-pointer hover:shadow-lg transition-all border-2"
+                 :class="selectedContentType === 'scripted' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'"
+                 @click="selectContentType('scripted')">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl text-white">🎬</span>
+        </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Fully Scripted</h3>
+                    <p class="text-gray-600 mb-4">For narrative content, documentaries, and dialogue-heavy videos</p>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4 text-left">
+                        <h4 class="font-medium text-gray-900 mb-2">What you'll get:</h4>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• Title generation or custom title</li>
+                            <li>• Script breakdown & structure</li>
+                            <li>• Plot outline</li>
+                            <li>• Full script with dialogue</li>
+                            <li>• AI voice generation (Kokoro/ElevenLabs)</li>
+                            <li>• Thumbnail generation</li>
+                        </ul>
+                </div>
+            </div>
+                </div>
+
+            <!-- Sora Generation Type (NEW) -->
+            <div class="glass-effect rounded-xl p-6 cursor-pointer hover:shadow-lg transition-all border-2"
+                 :class="selectedContentType === 'sora' ? 'border-gradient-to-r from-purple-500 to-pink-500 bg-gradient-to-br from-purple-50 to-pink-50' : 'border-gray-200'"
+                 @click="selectContentType('sora')">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl text-white">🌟</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Sora Generation</h3>
+                    <p class="text-gray-600 mb-4">AI-powered video generation with audio - no scripts needed!</p>
+                    
+                    <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 text-left">
+                        <h4 class="font-medium text-gray-900 mb-2">What you'll get:</h4>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• Title generation</li>
+                            <li>• AI Director storyboard</li>
+                            <li>• Cost calculator ($0.10 per 10s video)</li>
+                            <li>• Reference image support</li>
+                            <li>• Sora video + audio generation</li>
+                            <li>• Automatic scene stitching</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-3 px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs rounded-full">
+                        🚀 Next-Gen AI Video
+                    </div>
+                </div>
+            </div>
+        </div>
+                
+        <!-- Continue Button -->
+        <div class="text-center mt-8" x-show="selectedContentType">
+            <button @click="selectContentType(selectedContentType)" 
+                    class="px-8 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
+                Start Creating →
+                    </button>
+                </div>
+    </div>
+                
+    <!-- Stage 4: Content Creation -->
+    <div x-show="currentStage === 'creation'" class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="glass-effect rounded-xl p-6 mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Content Creation</h1>
+                        <p class="text-gray-600">
+                            <span x-text="selectedProject?.name"></span> → 
+                        <span x-text="selectedSeries?.name"></span> → 
+                        <span x-text="selectedTheme?.name"></span>
+                        </p>
+                    <div class="flex items-center mt-2">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                              :class="selectedContentType === 'authentic' ? 'bg-green-100 text-green-700' : 
+                                      selectedContentType === 'scripted' ? 'bg-purple-100 text-purple-700' : 
+                                      selectedContentType === 'sora' ? 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700' : 
+                                      'bg-emerald-100 text-emerald-700'">
+                            <span x-text="selectedContentType === 'authentic' ? '🎮 Authentic & Spontaneous' : 
+                                          selectedContentType === 'scripted' ? '🎬 Fully Scripted' : 
+                                          selectedContentType === 'sora' ? '🌟 Sora Generation' : 
+                                          '✍️ Manual Script'"></span>
+                        </span>
+                            </div>
+                    </div>
+                <button @click="currentStage = 'content-type'" class="text-gray-600 hover:text-gray-900 font-medium">
+                    ← Back to Content Type
+                    </button>
+                </div>
+            </div>
+
+        <!-- Progress Bar -->
+        <div class="glass-effect rounded-xl p-6 mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-sm font-medium text-gray-700">Content Creation Progress</span>
+                <span class="text-sm text-gray-600" x-text="Math.round(contentProgress) + '%'"></span>
+                        </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
+                     :style="'width: ' + contentProgress + '%'"></div>
+                </div>
+                </div>
+                
+        <!-- Manual Script Input (only for manual content type) -->
+        <div x-show="selectedContentType === 'manual'" class="space-y-6">
+            <!-- Script Input Step -->
+            <div class="glass-effect rounded-xl p-6" 
+                 :class="manualScript ? 'border-l-4 border-green-500' : 'border-l-4 border-indigo-500'">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                             :class="manualScript ? 'bg-green-500 text-white' : 'bg-indigo-500 text-white'">
+                            <span x-text="manualScript ? '✓' : '1'"></span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Script Input</h3>
+                            <p class="text-sm text-gray-600">Paste your script with character dialogue format</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div x-show="!manualScript" class="space-y-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <h4 class="font-medium text-blue-900 mb-2">Script Format Guide</h4>
+                        <p class="text-sm text-blue-800 mb-2">Use this format for multi-character support:</p>
+                        <div class="bg-white border rounded p-3 text-sm font-mono">
+                            [CHARACTER_NAME]: This is what they say<br>
+                            [ANOTHER_CHARACTER]: This is their response<br>
+                            [NARRATOR]: Scene description or narration
+                        </div>
+                    </div>
+                    
+                    <textarea x-model="manualScript" 
+                              placeholder="Paste your script here... Use [CHARACTER_NAME]: format for dialogue"
+                              class="w-full h-64 p-4 border border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none font-mono text-sm resize-y"></textarea>
+                    
+                    <button @click="processManualScript()" :disabled="!manualScript.trim()"
+                            class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50">
+                        Process Script & Detect Characters
+                    </button>
+                </div>
+
+                <div x-show="manualScript && detectedCharacters.length > 0" class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center space-x-3 mb-3">
+                        <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-xs">✓</span>
+                        </div>
+                        <div>
+                            <strong class="text-green-800">Script Processed Successfully</strong>
+                            <p class="text-green-700 text-sm">Detected <span x-text="detectedCharacters.length"></span> character(s)</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="character in detectedCharacters" :key="character">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700" 
+                                  x-text="character"></span>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Voice Selection Step -->
+            <div x-show="detectedCharacters.length > 0" class="glass-effect rounded-xl p-6"
+                 :class="Object.keys(voiceSelections).length === detectedCharacters.length ? 'border-l-4 border-green-500' : 'border-l-4 border-indigo-500'">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                             :class="Object.keys(voiceSelections).length === detectedCharacters.length ? 'bg-green-500 text-white' : 'bg-indigo-500 text-white'">
+                            <span x-text="Object.keys(voiceSelections).length === detectedCharacters.length ? '✓' : '2'"></span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Voice Selection</h3>
+                            <p class="text-sm text-gray-600">Choose voice service and voices for each character</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Voice Service Selection -->
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Voice Service</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="relative">
+                            <input type="radio" id="elevenlabs" name="voiceService" value="elevenlabs" 
+                                   x-model="selectedVoiceService" @change="voiceSelections = {}"
+                                   class="absolute opacity-0">
+                            <label for="elevenlabs" class="flex items-center p-3 border rounded-lg cursor-pointer transition-all"
+                                   :class="selectedVoiceService === 'elevenlabs' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-gray-400'">
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-900">ElevenLabs</div>
+                                    <div class="text-sm text-gray-600">Premium quality AI voices</div>
+                                </div>
+                                <div class="ml-2" x-show="selectedVoiceService === 'elevenlabs'">
+                                    <svg class="w-5 h-5 text-indigo-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="relative">
+                            <input type="radio" id="kokoro" name="voiceService" value="kokoro" 
+                                   x-model="selectedVoiceService" @change="voiceSelections = {}"
+                                   class="absolute opacity-0">
+                            <label for="kokoro" class="flex items-center p-3 border rounded-lg cursor-pointer transition-all"
+                                   :class="selectedVoiceService === 'kokoro' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-gray-400'">
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-900">Kokoro</div>
+                                    <div class="text-sm text-gray-600">Fast, free TTS voices</div>
+                                </div>
+                                <div class="ml-2" x-show="selectedVoiceService === 'kokoro'">
+                                    <svg class="w-5 h-5 text-indigo-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <template x-for="character in detectedCharacters" :key="character">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Voice for <span class="font-mono text-indigo-600" x-text="character"></span>
+                            </label>
+                            <select x-model="voiceSelections[character]" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                                <option value="">Select a voice...</option>
+                                <template x-for="voice in availableVoices" :key="voice.id">
+                                    <option :value="voice.id" x-text="voice.name"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Voice Generation Step -->
+            <div x-show="Object.keys(voiceSelections).length === detectedCharacters.length && detectedCharacters.length > 0" 
+                 class="glass-effect rounded-xl p-6"
+                 :class="voiceOverUrl ? 'border-l-4 border-green-500' : (generatingVoice ? 'border-l-4 border-indigo-500' : '')">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                             :class="voiceOverUrl ? 'bg-green-500 text-white' : (generatingVoice ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-500')">
+                            <span x-text="voiceOverUrl ? '✓' : '3'"></span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Voice Generation</h3>
+                            <p class="text-sm text-gray-600">Generate multi-character voiceover</p>
+                        </div>
+                    </div>
+                    <button x-show="!voiceOverUrl && !generatingVoice" 
+                            @click="generateManualVoiceOver()" 
+                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                        Generate
+                    </button>
+                </div>
+
+                <div x-show="generatingVoice" class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-3"></div>
+                    <p class="text-gray-600">Generating multi-character voiceover... This may take several minutes.</p>
+                </div>
+
+                <div x-show="voiceOverUrl" class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-xs">✓</span>
+                            </div>
+                            <div>
+                                <strong class="text-green-800">Voiceover Generated</strong>
+                                <p class="text-green-700">Multi-character audio ready</p>
+                            </div>
+                        </div>
+                        <a x-show="voiceOverUrl" :href="voiceOverUrl" target="_blank" 
+                           class="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 transition-colors">
+                            Download Audio
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thumbnail Generation Step -->
+            <div x-show="voiceOverUrl" class="glass-effect rounded-xl p-6"
+                 :class="thumbnailUrl ? 'border-l-4 border-green-500' : (generatingThumbnail ? 'border-l-4 border-indigo-500' : '')">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                             :class="thumbnailUrl ? 'bg-green-500 text-white' : (generatingThumbnail ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-500')">
+                            <span x-text="thumbnailUrl ? '✓' : '4'"></span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Thumbnail</h3>
+                            <p class="text-sm text-gray-600">Generate video thumbnail</p>
+                        </div>
+                    </div>
+                    <button x-show="!thumbnailUrl && !generatingThumbnail" 
+                            @click="createThumbnail()" 
+                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                        Generate
+                    </button>
+                </div>
+
+                <div x-show="generatingThumbnail" class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-3"></div>
+                    <p class="text-gray-600">Creating thumbnail...</p>
+                </div>
+
+                <div x-show="thumbnailUrl" class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-xs">✓</span>
+                            </div>
+                            <div>
+                                <strong class="text-green-800">Thumbnail Generated</strong>
+                                <p class="text-green-700">Ready for download</p>
+                            </div>
+                        </div>
+                        <a x-show="thumbnailUrl" :href="thumbnailUrl" target="_blank" 
+                           class="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 transition-colors">
+                            View Image
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sora Generation Workflow (NEW) -->
+        <div x-show="selectedContentType === 'sora'" class="space-y-6">
+            <!-- Sora Step 1: Title Selection -->
+            <div class="glass-effect rounded-xl p-6" 
+                 :class="selectedTitle ? 'border-l-4 border-purple-500' : (currentStep === 'sora-titles' ? 'border-l-4 border-purple-500' : '')">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                             :class="selectedTitle ? 'bg-purple-500 text-white' : (currentStep === 'sora-titles' ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-500')">
+                            <span x-text="selectedTitle ? '✓' : '1'"></span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">🌟 Video Title</h3>
+                            <p class="text-sm text-gray-600">Generate or enter your Sora video title</p>
+                        </div>
+                    </div>
+                    <button x-show="!selectedTitle && currentStep !== 'sora-titles'" 
+                            @click="currentStep = 'sora-titles'" 
+                            class="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors">
+                            Start
+                    </button>
+                </div>
+
+                <!-- Title Generation for Sora -->
+                <div x-show="currentStep === 'sora-titles'" class="space-y-4">
+                    <!-- Loading -->
+                    <div x-show="generatingTitles" class="text-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-3"></div>
+                        <p class="text-gray-600">AI is analyzing viral patterns...</p>
+                    </div>
+                    
+                    <!-- Generated Title Options -->
+                    <div x-show="!generatingTitles && generatedTitles.length > 0" class="space-y-3">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-medium text-gray-900">🎯 Choose Your Title:</h4>
+                            <button @click="generateTitles()" 
+                                    class="px-3 py-1 bg-purple-500 text-white rounded text-sm hover:bg-purple-600 transition-colors">
+                                🔄 Regenerate
+                            </button>
+                        </div>
+                        <template x-for="(title, index) in generatedTitles" :key="index">
+                            <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-purple-500 transition-colors"
+                                 @click="selectTitle(title)">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-medium text-gray-900" x-text="title"></span>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-4 h-4 border-2 border-gray-300 rounded-full"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        
+                        <button @click="showManualTitle = true" 
+                                class="w-full py-2 text-gray-600 hover:text-gray-900 transition-colors">
+                            ✍️ Or Enter Custom Title
+                        </button>
+                    </div>
+                    
+                    <!-- Initial buttons (before generating) -->
+                    <div x-show="!generatingTitles && generatedTitles.length === 0" class="flex space-x-4">
+                        <button @click="generateTitles()" 
+                                class="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors">
+                            🚀 Generate AI Titles
+                        </button>
+                        <button @click="showManualTitle = true" 
+                                class="px-6 py-3 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors">
+                            ✍️ Enter Custom Title
+                        </button>
+                    </div>
+                    
+                    <!-- Manual title input -->
+                    <div x-show="showManualTitle" class="space-y-3">
+                        <input type="text" x-model="manualTitle" placeholder="Enter your Sora video title..."
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none">
+                        <div class="flex space-x-3">
+                            <button @click="selectTitle(manualTitle)" :disabled="!manualTitle.trim()"
+                                    class="px-4 py-2 bg-purple-600 text-white rounded-lg disabled:opacity-50 hover:bg-purple-700 transition-colors">
+                                Use This Title
+                            </button>
+                            <button @click="showManualTitle = false; manualTitle = ''" 
+                                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                                ← Back
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selected Title Display -->
+                <div x-show="selectedTitle && currentStep !== 'sora-titles'" class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-xs">✓</span>
+                        </div>
+                        <div>
+                            <strong class="text-purple-800">Selected Title:</strong>
+                            <p class="text-purple-700" x-text="selectedTitle"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sora Step 2: Video Configuration -->
+            <div x-show="selectedTitle" class="glass-effect rounded-xl p-6"
+                 :class="soraConfig ? 'border-l-4 border-purple-500' : (currentStep === 'sora-config' ? 'border-l-4 border-purple-500' : '')">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                             :class="soraConfig ? 'bg-purple-500 text-white' : (currentStep === 'sora-config' ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-500')">
+                            <span x-text="soraConfig ? '✓' : '2'"></span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">⚙️ Video Configuration</h3>
+                            <p class="text-sm text-gray-600">Set duration, format, and cost parameters</p>
+                        </div>
+                    </div>
+                    <button x-show="!soraConfig && currentStep !== 'sora-config'" 
+                            @click="currentStep = 'sora-config'" 
+                            class="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors">
+                            Configure
+                    </button>
+                </div>
+
+                <div x-show="currentStep === 'sora-config'" class="space-y-6">
+                    <!-- Format Selection -->
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-3">📱 Video Format</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="border-2 rounded-lg p-4 cursor-pointer hover:border-purple-500 transition-colors"
+                                 :class="soraFormat === 'short' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'"
+                                 @click="soraFormat = 'short'">
+                                <div class="text-center">
+                                    <div class="text-2xl mb-2">📱</div>
+                                    <h5 class="font-medium">Short-Form</h5>
+                                    <p class="text-sm text-gray-600">15-60 seconds</p>
+                                    <p class="text-xs text-purple-600 mt-1">$0.20-$0.60</p>
+                                </div>
+                            </div>
+                            <div class="border-2 rounded-lg p-4 cursor-pointer hover:border-purple-500 transition-colors"
+                                 :class="soraFormat === 'long' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'"
+                                 @click="soraFormat = 'long'">
+                                <div class="text-center">
+                                    <div class="text-2xl mb-2">🎬</div>
+                                    <h5 class="font-medium">Long-Form</h5>
+                                    <p class="text-sm text-gray-600">1-10 minutes</p>
+                                    <p class="text-xs text-purple-600 mt-1">$0.60-$6.00</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Duration Slider -->
+                    <div x-show="soraFormat">
+                        <h4 class="font-medium text-gray-900 mb-3">⏱️ Duration</h4>
+                        <div class="space-y-3">
+                            <input type="range" x-model="soraDuration" 
+                                   :min="soraFormat === 'short' ? 15 : 60" 
+                                   :max="soraFormat === 'short' ? 60 : 600"
+                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span x-text="soraFormat === 'short' ? '15s' : '1m'"></span>
+                                <span class="font-medium text-purple-600" x-text="`${soraDuration}s`"></span>
+                                <span x-text="soraFormat === 'short' ? '60s' : '10m'"></span>
+                            </div>
+                            
+                            <!-- Cost Calculator -->
+                            <div class="bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg p-4">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h5 class="font-medium text-gray-900">Estimated Cost</h5>
+                                        <p class="text-sm text-gray-600">$0.10 per 10-second clip</p>
+                                        <p class="text-xs text-purple-500 mt-1">Clips are auto-stitched into one video</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-2xl font-bold text-purple-600" x-text="`$${((soraDuration / 10) * 0.1).toFixed(2)}`"></div>
+                                        <div class="text-xs text-gray-500" x-text="`${soraDuration}s = ${Math.ceil(soraDuration / 10)} x 10s clips`"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Auto-calculated scenes based on plot outline -->
+                    <div x-show="soraFormat" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p class="text-sm text-blue-800">
+                            <strong>📌 Smart Scenes:</strong> The number of scenes will be automatically determined 
+                            by your series' plot outline structure and the selected duration.
+                        </p>
+                    </div>
+
+                    <!-- Reference Images (Optional) -->
+                    <div x-show="soraFormat">
+                        <h4 class="font-medium text-gray-900 mb-3">🖼️ Reference Images (Optional)</h4>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-500 transition-colors">
+                            <input type="file" id="referenceImageUpload" accept="image/*" multiple class="hidden" @change="handleReferenceImages($event)">
+                            <label for="referenceImageUpload" class="cursor-pointer">
+                                <div class="text-4xl mb-2">📸</div>
+                                <p class="text-gray-600 mb-2">Upload reference images to guide Sora generation</p>
+                                <p class="text-sm text-gray-500">Drag & drop or click to select images</p>
+                            </label>
+                        </div>
+                        
+                        <!-- Reference Images Preview -->
+                        <div x-show="referenceImages.length > 0" class="mt-4">
+                            <div class="flex flex-wrap gap-3">
+                                <template x-for="(image, index) in referenceImages" :key="index">
+                                    <div class="relative group">
+                                        <img :src="image.preview" class="w-20 h-20 object-cover rounded-lg border-2 border-purple-200">
+                                        <button @click="removeReferenceImage(index)" 
+                                                class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            ×
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-2" x-text="`${referenceImages.length} reference image(s) uploaded`"></p>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-3 pt-4">
+                        <button @click="configureSora()" :disabled="!soraFormat"
+                                class="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50">
+                            Continue
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Configuration Summary -->
+                <div x-show="soraConfig && currentStep !== 'sora-config'" class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <strong class="text-purple-800">Configuration Set:</strong>
+                            <p class="text-purple-700 text-sm" x-text="`${soraFormat === 'short' ? 'Short-form' : 'Long-form'} • ${soraDuration}s • $${((soraDuration / 10) * 0.1).toFixed(2)}`"></p>
+                        </div>
+                        <button @click="currentStep = 'sora-config'" 
+                               class="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 transition-colors">
+                            Edit
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sora Step 3: AI Director Storyboard -->
+            <div x-show="soraConfig" class="glass-effect rounded-xl p-6"
+                 :class="soraStoryboard ? 'border-l-4 border-purple-500' : (currentStep === 'sora-storyboard' ? 'border-l-4 border-purple-500' : '')">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                             :class="soraStoryboard ? 'bg-purple-500 text-white' : (currentStep === 'sora-storyboard' ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-500')">
+                            <span x-text="soraStoryboard ? '✓' : '3'"></span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">🎭 AI Director Storyboard</h3>
+                            <p class="text-sm text-gray-600">AI analyzes series patterns and creates scene-by-scene storyboard</p>
+                        </div>
+                    </div>
+                    <button x-show="!soraStoryboard && currentStep !== 'sora-storyboard'" 
+                            @click="generateSoraStoryboard()" 
+                            class="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors">
+                            Generate Storyboard
+                    </button>
+                </div>
+
+                <div x-show="currentStep === 'sora-storyboard' && generatingSoraStoryboard" class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-3"></div>
+                    <p class="text-gray-600">AI Director is analyzing series patterns and creating storyboard...</p>
+                </div>
+
+                <!-- Storyboard Preview -->
+                <div x-show="soraStoryboard && currentStep !== 'sora-storyboard'" class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <strong class="text-purple-800">Storyboard Complete</strong>
+                            <p class="text-purple-700 text-sm" x-text="`${soraStoryboardScenes.length} scenes ready for generation`"></p>
+                        </div>
+                        <button @click="currentStep = 'sora-storyboard'" 
+                               class="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 transition-colors">
+                            Review Scenes
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Scene Details -->
+                <div x-show="currentStep === 'sora-storyboard' && soraStoryboardScenes.length > 0" class="space-y-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                        <p class="text-sm text-blue-800">
+                            <strong>📌 How This Works:</strong> Each scene below is a separate 10-second Sora video. 
+                            They'll be automatically stitched together to create your final <span x-text="soraDuration + 's'"></span> video with seamless transitions.
+                        </p>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-3">🎬 Generated Scenes (10s each):</h4>
+                    <template x-for="(scene, index) in soraStoryboardScenes" :key="index">
+                        <div class="border border-gray-200 rounded-lg p-4 bg-white">
+                            <div class="flex justify-between items-start mb-3">
+                                <h5 class="font-medium text-gray-900" x-text="`Scene ${index + 1}: ${scene.title}`"></h5>
+                                <span class="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded" x-text="`${scene.duration}s`"></span>
+                            </div>
+                            <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded p-3 text-sm mb-3">
+                                <strong class="text-purple-800">Sora Prompt:</strong>
+                                <p class="text-purple-700 mt-1" x-text="scene.prompt"></p>
+                            </div>
+                            <div class="flex justify-between items-center text-xs text-gray-500">
+                                <span x-text="`${scene.visual_style}`"></span>
+                                <span x-text="`Audio: ${scene.audio_style}`"></span>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button @click="generateSoraVideos()" 
+                                class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all">
+                            🚀 Generate Sora Videos ($<span x-text="((soraDuration / 10) * 0.1).toFixed(2)"></span>)
+                        </button>
+                        <button @click="soraStoryboard = true; currentStep = ''" 
+                                class="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors">
+                            Approve Storyboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sora Step 4: Generation Status -->
+            <div x-show="soraStoryboard" class="glass-effect rounded-xl p-6">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white">
+                        <span>4</span>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">🌟 Sora Generation</h3>
+                        <p class="text-sm text-gray-600">AI is creating your video with audio</p>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 text-center">
+                    <div class="text-4xl mb-4">🎬</div>
+                    <h4 class="font-semibold text-gray-900 mb-2">Ready for Sora Generation!</h4>
+                    <p class="text-gray-600 mb-4">Your storyboard is complete and ready for AI video generation.</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div class="bg-white rounded-lg p-3">
+                            <div class="font-medium text-gray-900">Total Duration</div>
+                            <div class="text-purple-600" x-text="`${soraDuration} seconds`"></div>
+                        </div>
+                        <div class="bg-white rounded-lg p-3">
+                            <div class="font-medium text-gray-900">Estimated Cost</div>
+                            <div class="text-purple-600" x-text="`$${((soraDuration / 10) * 0.1).toFixed(2)}`"></div>
+                        </div>
+                        <div class="bg-white rounded-lg p-3">
+                            <div class="font-medium text-gray-900">Clips</div>
+                            <div class="text-purple-600" x-text="`${Math.ceil(soraDuration / 10)} x 10s clips`"></div>
+                        </div>
+                        <div class="bg-white rounded-lg p-3">
+                            <div class="font-medium text-gray-900">Format</div>
+                            <div class="text-purple-600" x-text="soraFormat === 'short' ? 'Short-form' : 'Long-form'"></div>
+                        </div>
+                    </div>
+                    
+                    <button @click="generateSoraVideos()" 
+                            class="mt-6 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all text-lg">
+                        🚀 Generate with Sora ($<span x-text="((soraDuration / 10) * 0.1).toFixed(2)"></span>)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Regular Content Creation Steps (for authentic/scripted) -->
+        <div x-show="selectedContentType !== 'manual' && selectedContentType !== 'sora'" class="space-y-6">
+                        <!-- Step 1: Title Selection -->
+            <div class="glass-effect rounded-xl p-6" 
+                 :class="selectedTitle ? 'border-l-4 border-green-500' : (currentStep === 'titles' ? 'border-l-4 border-indigo-500' : '')">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                             :class="selectedTitle ? 'bg-green-500 text-white' : (currentStep === 'titles' ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-500')">
+                            <span x-text="selectedTitle ? '✓' : '1'"></span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Choose Title Method</h3>
+                            <p class="text-sm text-gray-600">Generate AI titles or enter your own</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Title Method Selection -->
+                <div x-show="currentStep === 'titles' && !titleMethodSelected">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Auto Generate -->
+                        <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 transition-colors"
+                             @click="selectTitleMethod('auto')">
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <span class="text-xl">🤖</span>
+                                </div>
+                                <h4 class="font-medium text-gray-900 mb-2">Auto Generate</h4>
+                                <p class="text-sm text-gray-600">AI creates viral titles based on competitor analysis</p>
+                            </div>
+                </div>
+                
+                        <!-- Manual Entry -->
+                        <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 transition-colors"
+                             @click="selectTitleMethod('manual')">
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <span class="text-xl">✏️</span>
+                        </div>
+                                <h4 class="font-medium text-gray-900 mb-2">Manual Entry</h4>
+                                <p class="text-sm text-gray-600">Enter your own custom title</p>
+                            </div>
+                        </div>
+                </div>
+            </div>
+
+                <!-- Auto Title Generation -->
+                <div x-show="currentStep === 'titles' && titleMethod === 'auto'">
+                    <!-- Loading -->
+                    <div x-show="generatingTitles" class="text-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-3"></div>
+                        <p class="text-gray-600">AI is analyzing viral patterns...</p>
+                </div>
+                
+                    <!-- Generated Title Options -->
+                    <div x-show="!generatingTitles && generatedTitles.length > 0" class="space-y-3">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-medium text-gray-900">🎯 Choose Your Title:</h4>
+                            <button @click="generateTitles()" 
+                                    class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors">
+                                🔄 Regenerate
+                    </button>
+                </div>
+                                <template x-for="(title, index) in generatedTitles" :key="index">
+                            <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 transition-colors"
+                                         @click="selectTitle(title)">
+                                        <div class="flex items-center justify-between">
+                                    <span class="font-medium text-gray-900" x-text="title"></span>
+                                            <div class="flex items-center space-x-2">
+                                        <div class="w-4 h-4 border-2 border-gray-300 rounded-full"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                        
+                        <button @click="titleMethod = ''; titleMethodSelected = false" 
+                                class="w-full py-2 text-gray-600 hover:text-gray-900 transition-colors">
+                            ← Back to Title Methods
+                        </button>
+                </div>
+                
+                    <!-- Initial generate button -->
+                    <div x-show="!generatingTitles && generatedTitles.length === 0" class="text-center py-4">
+                        <button @click="generateTitles()" 
+                                class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
+                            🚀 Generate AI Titles
+                    </button>
+                </div>
+            </div>
+
+                <!-- Manual Title Entry -->
+                <div x-show="currentStep === 'titles' && titleMethod === 'manual'" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Enter Your Title</label>
+                        <input type="text" x-model="manualTitle" placeholder="Enter your custom title..."
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none">
+                </div>
+                                <div class="flex space-x-3">
+                        <button @click="selectTitle(manualTitle)" :disabled="!manualTitle.trim()"
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50 hover:bg-green-700 transition-colors">
+                                        Use This Title
+                    </button>
+                        <button @click="titleMethod = ''; titleMethodSelected = false; manualTitle = ''" 
+                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                            ← Back to Methods
+                                    </button>
+                            </div>
+                </div>
+                
+                <!-- Selected Title Display -->
+                <div x-show="selectedTitle && currentStep !== 'titles'" class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-xs">✓</span>
+                            </div>
+                            <div>
+                                <strong class="text-green-800">Selected Title:</strong>
+                                <p class="text-green-700" x-text="selectedTitle"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            <!-- Step 2: Script Breakdown -->
+            <div x-show="selectedTitle" class="glass-effect rounded-xl p-6"
+                 :class="scriptBreakdown ? 'border-l-4 border-green-500' : (currentStep === 'script' ? 'border-l-4 border-indigo-500' : '')">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                             :class="scriptBreakdown ? 'bg-green-500 text-white' : (currentStep === 'script' ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-500')">
+                            <span x-text="scriptBreakdown ? '✓' : '2'"></span>
+                        </div>
+                                <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Script Breakdown</h3>
+                            <p class="text-sm text-gray-600">AI analyzes top videos to create your script structure</p>
+                        </div>
+                            </div>
+                    <button x-show="!scriptBreakdown && currentStep !== 'script'" 
+                            @click="createScriptBreakdown()" 
+                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                            Create
+                    </button>
+                </div>
+
+                <div x-show="currentStep === 'script' && generatingScript" class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-3"></div>
+                    <p class="text-gray-600">Analyzing competitor video structures...</p>
+            </div>
+
+                                <div x-show="scriptBreakdown && currentStep !== 'script'" class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-xs">✓</span>
+                                </div>
+                                <div>
+                                <strong class="text-green-800">Script Analysis Complete</strong>
+                                <p class="text-green-700">Viral structure insights generated</p>
+                                </div>
+                            </div>
+                            <a x-show="scriptBreakdownUrl" :href="scriptBreakdownUrl" target="_blank" 
+                           class="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 transition-colors">
+                                View Document
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+            <!-- Step 3: Plot Outline -->
+            <div x-show="scriptBreakdown" class="glass-effect rounded-xl p-6"
+                 :class="plotOutline ? 'border-l-4 border-green-500' : (currentStep === 'outline' ? 'border-l-4 border-indigo-500' : '')">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                             :class="plotOutline ? 'bg-green-500 text-white' : (currentStep === 'outline' ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-500')">
+                            <span x-text="plotOutline ? '✓' : '3'"></span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Plot Outline</h3>
+                            <p class="text-sm text-gray-600">Create detailed content structure</p>
+                        </div>
+                    </div>
+                    <button x-show="!plotOutline && currentStep !== 'outline'" 
+                            @click="createPlotOutline()" 
+                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                            Create
+                    </button>
+                </div>
+                
+                <div x-show="currentStep === 'outline' && generatingOutline" class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-3"></div>
+                    <p class="text-gray-600">Creating detailed plot outline...</p>
+                </div>
+                
+                <div x-show="plotOutline && currentStep !== 'outline'" class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-xs">✓</span>
+                        </div>
+                                <div>
+                                <strong class="text-green-800">Plot Outline Complete</strong>
+                                <p class="text-green-700">Detailed content structure created</p>
+                                </div>
+                            </div>
+                            <a x-show="plotOutlineUrl" :href="plotOutlineUrl" target="_blank" 
+                           class="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 transition-colors">
+                                View Document
+                            </a>
+                    </div>
+                </div>
+            </div>
+
+                        <!-- Step 4: Full Script (Scripted Content Only) -->
+            <div x-show="plotOutline && selectedContentType === 'scripted'" class="glass-effect rounded-xl p-6"
+                 :class="fullScript ? 'border-l-4 border-green-500' : (currentStep === 'fullScript' ? 'border-l-4 border-indigo-500' : '')">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                             :class="fullScript ? 'bg-green-500 text-white' : (currentStep === 'fullScript' ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-500')">
+                            <span x-text="fullScript ? '✓' : '4'"></span>
+                </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Full Script</h3>
+                            <p class="text-sm text-gray-600">Generate complete dialogue script</p>
+                        </div>
+                    </div>
+                    <button x-show="!fullScript && currentStep !== 'fullScript'" 
+                            @click="createFullScript()" 
+                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+                        Create
+                    </button>
+                </div>
+                
+                <div x-show="currentStep === 'fullScript' && generatingFullScript" class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-3"></div>
+                    <p class="text-gray-600">Creating full script with dialogue...</p>
+                    </div>
+
+                <div x-show="fullScript && currentStep !== 'fullScript'" class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-xs">✓</span>
+                            </div>
+                            <div>
+                                <strong class="text-green-800">Full Script Complete</strong>
+                                <p class="text-green-700">Complete dialogue script generated</p>
+                            </div>
+                        </div>
+                        <a x-show="fullScriptUrl" :href="fullScriptUrl" target="_blank" 
+                           class="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 transition-colors">
+                            View Document
+                        </a>
+                            </div>
+                </div>
+                </div>
+                
+            <!-- Step 5: Voice Over Method (Scripted Content Only) -->
+            <div x-show="fullScript && selectedContentType === 'scripted'" class="glass-effect rounded-xl p-6"
+                 :class="voiceOverUrl ? 'border-l-4 border-green-500' : (currentStep === 'voice' ? 'border-l-4 border-indigo-500' : '')">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                             :class="voiceOverUrl ? 'bg-green-500 text-white' : (currentStep === 'voice' ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-500')">
+                            <span x-text="voiceOverUrl ? '✓' : '5'"></span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Voice Over Generation</h3>
+                            <p class="text-sm text-gray-600">Choose your AI voice method</p>
+                        </div>
+                </div>
+            </div>
+
+                <!-- Voice Method Selection -->
+                <div x-show="currentStep === 'voice' && !voiceMethodSelected">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- ElevenLabs -->
+                        <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 transition-colors"
+                             @click="selectVoiceMethod('elevenlabs')">
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <span class="text-xl">🎙️</span>
+                            </div>
+                                <h4 class="font-medium text-gray-900 mb-2">ElevenLabs</h4>
+                                <p class="text-sm text-gray-600">Premium AI voices with natural emotion</p>
+                                <span class="inline-block mt-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">Premium</span>
+                            </div>
+        </div>
+
+                        <!-- Kokoro -->
+                        <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-indigo-500 transition-colors"
+                             @click="selectVoiceMethod('kokoro')">
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <span class="text-xl">🗣️</span>
+                            </div>
+                                <h4 class="font-medium text-gray-900 mb-2">Kokoro TTS</h4>
+                                <p class="text-sm text-gray-600">Open-source voices with good quality</p>
+                                <span class="inline-block mt-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">Free</span>
+                            </div>
+                        </div>
+        </div>
+    </div>
+
+                <!-- Voice Generation Progress -->
+                <div x-show="currentStep === 'voice' && generatingVoice" class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-3"></div>
+                    <p class="text-gray-600" x-text="'Generating voice with ' + (voiceMethod === 'elevenlabs' ? 'ElevenLabs' : 'Kokoro') + '...'"></p>
+                </div>
+
+                <!-- Voice Complete -->
+                <div x-show="voiceOverUrl && currentStep !== 'voice'" class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-xs">✓</span>
+                            </div>
+                    <div>
+                                <strong class="text-green-800">Voice Over Complete</strong>
+                                <p class="text-green-700" x-text="'Generated with ' + (voiceMethod === 'elevenlabs' ? 'ElevenLabs' : 'Kokoro')"></p>
+                    </div>
+                </div>
+                        <a :href="voiceOverUrl" target="_blank" 
+                           class="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 transition-colors">
+                                    Listen →
+                                </a>
+                </div>
+                        </div>
+                    </div>
+
+            <!-- Final Assets -->
+            <div x-show="plotOutline" class="glass-effect rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Final Assets</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Thumbnail Generation -->
+                    <div class="border-2 rounded-lg p-4"
+                         :class="thumbnailUrl ? 'border-green-500 bg-green-50' : 'border-gray-200'">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-lg">🎨</span>
+                                <span class="font-medium text-gray-900">AI Thumbnail</span>
+                            </div>
+                            <button x-show="!thumbnailUrl && currentStep !== 'thumbnail'" 
+                                    @click="createThumbnail()" 
+                                    class="px-3 py-1 bg-indigo-600 text-white rounded text-sm font-medium hover:bg-indigo-700 transition-colors">
+                                Generate
+            </button>
+                </div>
+
+                        <div x-show="currentStep === 'thumbnail' && generatingThumbnail" class="text-center py-4">
+                            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+                            <p class="text-gray-600 text-sm">Training AI on competitor thumbnails...</p>
+                    </div>
+
+                        <div x-show="thumbnailUrl" class="mt-3">
+                            <img :src="thumbnailUrl" alt="Generated Thumbnail" 
+                                 class="w-full aspect-video object-cover rounded border border-green-300">
+                </div>
+        </div>
+
+                    <!-- Export Options -->
+                    <div class="border-2 border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center space-x-2 mb-3">
+                            <span class="text-lg">📋</span>
+                            <span class="font-medium text-gray-900">Export Options</span>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <button @click="exportToTrello()" 
+                                    class="w-full px-3 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors">
+                                📋 Export to Trello
+            </button>
+                            <button @click="downloadAssets()" 
+                                    class="w-full px-3 py-2 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700 transition-colors">
+                                💾 Download All Assets
+            </button>
+        </div>
+    </div>
+</div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function contentStudio() {
+        return {
+        // Stage Management
+        currentStage: 'project', // 'project', 'selection', 'content-type', 'creation'
+        currentStep: '', // 'titles', 'script', 'fullScript', 'thumbnail', 'voice'
+        loading: false,
+
+        // URL Parameters
+        selectedProjectId: '',
+        selectedSeriesName: '',
+        selectedThemeName: '',
+        
+        // Project Data
+            selectedProject: null,
+        seriesData: [],
+            selectedSeries: null,
+            selectedTheme: null,
+        
+        // Content Type Selection
+        selectedContentType: '', // 'authentic', 'scripted', 'manual', or 'sora'
+        
+        // Manual Script Input
+        manualScript: '',
+        manualScriptMode: false,
+        detectedCharacters: [],
+        voiceSelections: {},
+        selectedVoiceService: 'elevenlabs', // 'elevenlabs' or 'kokoro'
+        
+        elevenlabsVoices: [
+            // ElevenLabs Pre-made Voices
+            { name: "Female (Rachel)", id: "21m00Tcm4TlvDq8ikWAM" },
+            { name: "Female (Domi)", id: "AZnzlk1XvdvUeBnXmlld" },
+            { name: "Female (Bella)", id: "EXAVITQu4vr4xnSDxMaL" },
+            { name: "Female (Elli)", id: "MF3mGyEYCl7XYWbV9V6O" },
+            { name: "Female (Matilda)", id: "XrExE9yKIg1WjnnlVkGX" },
+            { name: "Male (Adam)", id: "pNInz6obpgDQGcFmaJgB" },
+            { name: "Male (Antoni)", id: "ErXwobaYiN019PkySvjV" },
+            { name: "Male (Arnold)", id: "VR6AewLTigWG4xSOukaG" },
+            { name: "Male (Josh)", id: "TxGEqnHWrfWFTfGW9XjX" },
+            { name: "Male (Sam)", id: "yoZ06aMxZJJ28mfd3POQ" },
+            // Additional ElevenLabs voices
+            { name: "Female (Freya)", id: "jsCqWAovK2LkecY7zXl4" },
+            { name: "Female (Grace)", id: "oWAxZDx7w5VEj9dCyTzz" },
+            { name: "Female (Emily)", id: "LcfcDJNUP1GQjkzn1xUU" },
+            { name: "Male (Brian)", id: "nPczCjzI2devNBz1zQrb" },
+            { name: "Male (Daniel)", id: "onwK4e9ZLuTAKqWW03F9" },
+            { name: "Male (Callum)", id: "N2lVS1w4EtoT3dr4eOWO" },
+            { name: "Male (Charlie)", id: "IKne3meq5aSn9XLyUdCD" },
+            { name: "Male (Chris)", id: "iP95p4xoKVk53GoZ742B" },
+            { name: "Female (Sarah)", id: "EXAVITQu4vr4xnSDxMaL" },
+            { name: "Female (Laura)", id: "FGY2WhTYpPnrIDTdsKH5" },
+            { name: "Male (Liam)", id: "TX3LPaxmHKxFdv7VOQHJ" },
+            { name: "Female (Charlotte)", id: "XB0fDUnXU5powFXDhCwa" },
+            { name: "Male (James)", id: "ZQe5CZNOzWyzPSCn5a3c" }
+        ],
+        
+        kokoroVoices: [
+            // Kokoro TTS Voices (same as Discord bot)
+            { name: "Female (Nicole)", id: "af_nicole" },
+            { name: "Female (Bella)", id: "af_bella" },
+            { name: "Female (Sarah)", id: "af_sarah" },
+            { name: "Female (Sky)", id: "af_sky" },
+            { name: "Female (Emma)", id: "bf_emma" },
+            { name: "Female (Isabella)", id: "bf_isabella" },
+            { name: "Male (Adam)", id: "am_adam" },
+            { name: "Male (Michael)", id: "am_michael" },
+            { name: "Male (George)", id: "bm_george" },
+            { name: "Male (Lewis)", id: "bm_lewis" },
+            { name: "Female (Alloy)", id: "af_alloy" },
+            { name: "Female (Aoede)", id: "af_aoede" },
+            { name: "Female (Jessica)", id: "af_jessica" },
+            { name: "Female (Kore)", id: "af_kore" },
+            { name: "Female (Nova)", id: "af_nova" },
+            { name: "Female (River)", id: "af_river" },
+            { name: "Male (Echo)", id: "am_echo" },
+            { name: "Male (Eric)", id: "am_eric" },
+            { name: "Male (Fenrir)", id: "am_fenrir" },
+            { name: "Male (Liam)", id: "am_liam" },
+            { name: "Male (Onyx)", id: "am_onyx" },
+            { name: "Male (Puck)", id: "am_puck" }
+        ],
+        
+        // Title Generation
+        titleMethod: '', // 'auto' or 'manual'
+        titleMethodSelected: false,
+        generatedTitles: [],
+        selectedTitle: '',
+        manualTitle: '',
+        
+        // Content Creation Data
+        scriptBreakdown: false,
+        scriptBreakdownUrl: '',
+        plotOutline: false,
+        plotOutlineUrl: '',
+        fullScript: false,
+        fullScriptUrl: '',
+        thumbnailUrl: '',
+        voiceOverUrl: '',
+        
+        // Sora Generation Data
+        soraConfig: false,
+        soraFormat: '', // 'short' or 'long'
+        soraDuration: 30, // seconds
+        soraScenes: 1, // number of scenes
+        soraStoryboard: false,
+        soraStoryboardScenes: [],
+        generatingSoraStoryboard: false,
+        referenceImages: [], // uploaded reference images
+        showManualTitle: false,
+        
+        // Voice Selection
+        voiceMethod: '', // 'elevenlabs' or 'kokoro'
+        voiceMethodSelected: false,
+        
+        // Generation States
+        generatingTitles: false,
+        generatingScript: false,
+        generatingOutline: false,
+        generatingFullScript: false,
+        generatingThumbnail: false,
+        generatingVoice: false,
+        
+        // Computed Properties
+        get availableVoices() {
+            return this.selectedVoiceService === 'elevenlabs' ? this.elevenlabsVoices : this.kokoroVoices;
+        },
+        
+        get contentProgress() {
+            let completed = 0;
+            let total = 0;
+            
+            // Base steps for both types
+            if (this.selectedTitle) completed++;
+            total++;
+            
+            if (this.scriptBreakdown) completed++;
+            total++;
+            
+            if (this.plotOutline) completed++;
+            total++;
+            
+            // Additional steps for scripted content
+            if (this.selectedContentType === 'scripted') {
+                if (this.fullScript) completed++;
+                total++;
+                
+                if (this.voiceOverUrl) completed++;
+                total++;
+            }
+            
+            return total > 0 ? (completed / total) * 100 : 0;
+        },
+        
+        // Auto-selection from URL parameters
+        async autoSelectFromParams() {
+            if (!this.selectedProjectId) return;
+            
+            // Find and select the project
+            const projectElement = document.querySelector(`[data-project-id="${this.selectedProjectId}"]`);
+            if (projectElement) {
+                // Simulate project selection
+                this.selectedProject = {
+                    id: this.selectedProjectId,
+                    name: projectElement.dataset.projectName || 'Selected Project'
+                };
+                
+                // Load project data
+                await this.loadProjectData();
+                
+                // Auto-select series and theme if provided
+                if (this.selectedSeriesName && this.selectedThemeName) {
+                    const series = this.seriesData.find(s => s.name === this.selectedSeriesName);
+                    if (series) {
+                        this.selectSeries(series);
+                        const theme = series.themes?.find(t => t.name === this.selectedThemeName);
+                        if (theme) {
+                            this.selectTheme(theme);
+                            this.startContentCreation();
+                        }
+                    }
+                }
+            }
+        },
+        
+        // Methods
+        selectProject(project) {
+            this.selectedProject = project;
+        },
+        
+        async loadProjectData() {
+            if (!this.selectedProject) return;
+            
+            this.loading = true;
+            this.currentStage = 'selection';
+            
+            try {
+                const response = await fetch(`/trends/api/get-series/${this.selectedProject.id}`);
+                    const data = await response.json();
+                
+                if (data.success && data.series) {
+                    this.seriesData = data.series;
+                } else {
+                    console.error('Failed to load series data:', data);
+                    this.seriesData = [];
+                    }
+                } catch (error) {
+                    console.error('Error loading series:', error);
+                this.seriesData = [];
+            }
+            
+            this.loading = false;
+        },
+        
+        selectSeries(series) {
+            this.selectedSeries = series;
+            this.selectedTheme = null; // Reset theme selection
+        },
+        
+        selectTheme(theme) {
+            this.selectedTheme = theme;
+        },
+        
+        startContentCreation() {
+            this.currentStage = 'content-type';
+            this.resetContentCreation();
+        },
+        
+        selectContentType(type) {
+            this.selectedContentType = type;
+            this.currentStage = 'creation';
+            this.currentStep = type === 'sora' ? 'sora-titles' : 'titles';
+        },
+        
+        
+        selectTitleMethod(method) {
+            this.titleMethod = method;
+            this.titleMethodSelected = true;
+            if (method === 'auto') {
+                // Auto-generate titles immediately
+                this.generateTitles();
+            }
+        },
+        
+        resetContentCreation() {
+            this.generatedTitles = [];
+            this.selectedTitle = '';
+            this.manualTitle = '';
+            this.showManualTitle = false;
+            this.scriptBreakdown = false;
+            this.scriptBreakdownUrl = '';
+            this.thumbnailUrl = '';
+            this.voiceOverUrl = '';
+            },
+
+            async generateTitles() {
+            if (!this.selectedSeries || !this.selectedTheme) return;
+            
+            this.generatingTitles = true;
+            this.currentStep = this.selectedContentType === 'sora' ? 'sora-titles' : 'titles';
+            
+            try {
+                // Get example titles
+                const exampleResponse = await fetch('/studio-api/api/get-example-titles', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                        groupId: this.selectedProject.id,
+                        seriesName: this.selectedSeries.name,
+                        themeName: this.selectedTheme.name
+                        })
+                    });
+                
+                const exampleData = await exampleResponse.json();
+                
+                if (!exampleData.success || !exampleData.exampleTitles) {
+                    throw new Error('No example titles found for this series and theme.');
+                }
+                
+                // Generate titles
+                const response = await fetch('/studio-api/api/generate-titles', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                        seriesData: this.selectedSeries,
+                        themeData: this.selectedTheme,
+                        exampleTitles: exampleData.exampleTitles
+                        })
+                    });
+                
+                    const data = await response.json();
+                
+                if (data.success && data.titles && data.titles.length > 0) {
+                    this.generatedTitles = data.titles;
+                } else {
+                    throw new Error('Failed to generate titles. Please try again.');
+                    }
+                } catch (error) {
+                console.error('Error generating titles:', error);
+                alert(`Error: ${error.message}`);
+            }
+            
+            this.generatingTitles = false;
+        },
+        
+        selectTitle(title) {
+            if (title && title.trim()) {
+                this.selectedTitle = title.trim();
+                this.currentStep = '';
+                this.titleMethodSelected = false;
+                this.titleMethod = '';
+                this.manualTitle = '';
+            }
+        },
+        
+        async pollForAsset(assetType) {
+            let attempts = 0;
+            const maxAttempts = 60; // 5 minutes max polling
+            
+            while (attempts < maxAttempts) {
+                try {
+                    const response = await fetch('/studio-api/api/check-asset-status', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            groupId: this.selectedProject.id,
+                            seriesName: this.selectedSeries.name,
+                            themeName: this.selectedTheme.name
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success && data.assets) {
+                        if (assetType === 'scriptBreakdown' && data.assets.scriptBreakdown) {
+                            this.scriptBreakdown = true;
+                            this.scriptBreakdownUrl = data.assets.scriptBreakdown;
+                            return;
+                        }
+                        if (assetType === 'thumbnail' && data.assets.thumbnail) {
+                            this.thumbnail = true;
+                            this.thumbnailUrl = data.assets.thumbnail;
+                            return;
+                        }
+                        if (assetType === 'voiceover' && data.assets.voiceover) {
+                            this.voiceOver = true;
+                            this.voiceOverUrl = data.assets.voiceover;
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error polling asset status:', error);
+                }
+                
+                attempts++;
+                await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+            }
+            
+            throw new Error(`Timeout waiting for ${assetType} to complete`);
+        },
+        
+        async createScriptBreakdown() {
+            this.generatingScript = true;
+            this.currentStep = 'script';
+            
+            try {
+                const response = await fetch('/studio-api/api/create-script-breakdown', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                        groupId: this.selectedProject.id,
+                        seriesName: this.selectedSeries.name,
+                        themeName: this.selectedTheme.name,
+                        title: this.selectedTitle
+                        })
+                    });
+                
+                    const data = await response.json();
+                    if (data.success) {
+                    // Start polling for completion
+                    await this.pollForAsset('scriptBreakdown');
+                } else {
+                    throw new Error(data.error || 'Failed to create script breakdown');
+                    }
+                } catch (error) {
+                console.error('Error creating script breakdown:', error);
+                alert('Error creating script breakdown: ' + error.message);
+            } finally {
+            this.generatingScript = false;
+                this.currentStep = '';
+            }
+        },
+
+        // ===== SORA GENERATION FUNCTIONS =====
+        
+        configureSora() {
+            if (!this.soraFormat) {
+                alert('Please select a format');
+                return;
+            }
+            
+            // Auto-calculate scenes based on duration (will be refined by plot outline)
+            this.soraScenes = Math.ceil(this.soraDuration / 10);  // Approximate - plot outline will determine actual
+            
+            this.soraConfig = true;
+            this.currentStep = '';
+        },
+
+        async generateSoraStoryboard() {
+            if (!this.soraConfig) {
+                alert('Please configure video settings first');
+                return;
+            }
+            
+            this.generatingSoraStoryboard = true;
+            this.currentStep = 'sora-storyboard';
+            
+            try {
+                const response = await fetch('/api/sora/generate-storyboard', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: this.selectedTitle,
+                        series_name: this.selectedSeries.name,
+                        theme_name: this.selectedTheme.name,
+                        group_id: this.selectedProject.id,
+                        format: this.soraFormat,
+                        duration: this.soraDuration,
+                        scene_count: this.soraScenes
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    this.soraStoryboard = true;
+                    this.soraStoryboardScenes = data.storyboard_scenes;
+                    this.showNotification(`✅ Storyboard created with ${data.storyboard_scenes.length} scenes`, 'success');
+                } else {
+                    throw new Error(data.error || 'Failed to generate storyboard');
+                }
+            } catch (error) {
+                console.error('Error generating Sora storyboard:', error);
+                alert('Error generating storyboard: ' + error.message);
+            } finally {
+                this.generatingSoraStoryboard = false;
+                this.currentStep = '';
+            }
+        },
+
+        async generateSoraVideos() {
+            if (!this.soraStoryboard || !this.soraStoryboardScenes.length) {
+                alert('No storyboard available for generation');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/sora/generate-videos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        storyboard_scenes: this.soraStoryboardScenes,
+                        total_duration: this.soraDuration,
+                        format: this.soraFormat
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    this.showNotification(`🚀 Started Sora generation! Estimated cost: $${((this.soraDuration / 10) * 0.1).toFixed(2)}`, 'info');
+                } else {
+                    throw new Error(data.error || 'Failed to start Sora generation');
+                }
+            } catch (error) {
+                console.error('Error starting Sora generation:', error);
+                alert('Error starting Sora generation: ' + error.message);
+            }
+        },
+
+        showNotification(message, type = 'info') {
+            // Simple notification system
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            }`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        },
+
+        // ===== REFERENCE IMAGE FUNCTIONS =====
+        
+        handleReferenceImages(event) {
+            const files = Array.from(event.target.files);
+            
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.referenceImages.push({
+                            file: file,
+                            preview: e.target.result,
+                            name: file.name
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            this.showNotification(`📸 Added ${files.length} reference image(s)`, 'success');
+        },
+
+        removeReferenceImage(index) {
+            this.referenceImages.splice(index, 1);
+            this.showNotification('🗑️ Reference image removed', 'info');
+        },
+
+        async uploadReferenceImages() {
+            if (this.referenceImages.length === 0) return [];
+            
+            const uploadedUrls = [];
+            
+            for (const imageData of this.referenceImages) {
+                try {
+                    const formData = new FormData();
+                    formData.append('image', imageData.file);
+                    
+                    const response = await fetch('/api/upload-reference-image', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        uploadedUrls.push(result.url);
+                    }
+                } catch (error) {
+                    console.error('Error uploading reference image:', error);
+                }
+            }
+            
+            return uploadedUrls;
+        },
+        
+        async pollForAsset(assetType) {
+            const maxAttempts = 60; // 5 minutes max
+            let attempts = 0;
+            
+            while (attempts < maxAttempts) {
+                try {
+                    const response = await fetch('/studio-api/api/check-asset-status', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            groupId: this.selectedProject.id,
+                            seriesName: this.selectedSeries.name,
+                            themeName: this.selectedTheme.name
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success && data.assets) {
+                        if (assetType === 'scriptBreakdown' && data.assets.scriptBreakdown) {
+                            this.scriptBreakdown = true;
+                            this.scriptBreakdownUrl = data.assets.scriptBreakdown;
+                            return;
+                        }
+                        if (assetType === 'plotOutline' && data.assets.plotOutline) {
+                            this.plotOutline = true;
+                            this.plotOutlineUrl = data.assets.plotOutline;
+                            return;
+                        }
+                        if (assetType === 'fullScript' && data.assets.fullScript) {
+                            this.fullScript = true;
+                            this.fullScriptUrl = data.assets.fullScript;
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error polling asset status:', error);
+                }
+                
+                attempts++;
+                await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+            }
+            
+            throw new Error(`Timeout waiting for ${assetType} to complete`);
+        },
+        
+        async showVideoLengthModal() {
+            // Create modal popup matching Discord bot's VideoLengthModal
+            return new Promise((resolve) => {
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white rounded-lg p-6 w-96 max-w-md">
+                        <h3 class="text-xl font-bold mb-4">Enter Video Length</h3>
+                        <p class="text-gray-600 mb-4">Examples: 30s, 2m30s, 1h30m, 2h</p>
+                        <input type="text" id="videoLengthInput" class="w-full p-3 border rounded-lg mb-4" 
+                               placeholder="Enter video length..." autofocus>
+                        <div class="flex gap-3">
+                            <button id="confirmLength" class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                                Confirm
+                            </button>
+                            <button id="cancelLength" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                const input = modal.querySelector('#videoLengthInput');
+                const confirmBtn = modal.querySelector('#confirmLength');
+                const cancelBtn = modal.querySelector('#cancelLength');
+                
+                // Parse duration function (matching Discord bot logic)
+                function parseDuration(durationStr) {
+                    const str = durationStr.toLowerCase();
+                    let totalMinutes = 0;
+                    
+                    // Parse hours
+                    if (str.includes('h')) {
+                        const hours = str.split('h')[0];
+                        totalMinutes += parseInt(hours) * 60;
+                    }
+                    
+                    // Parse minutes
+                    if (str.includes('m')) {
+                        const parts = str.split('h');
+                        const minutePart = parts[parts.length - 1].split('m')[0];
+                        totalMinutes += parseInt(minutePart) || 0;
+                    }
+                    
+                    // Parse seconds
+                    if (str.includes('s') && !str.includes('m')) {
+                        const seconds = str.split('s')[0];
+                        totalMinutes += parseInt(seconds) / 60;
+                    }
+                    
+                    // If no unit specified, assume minutes
+                    if (!str.includes('h') && !str.includes('m') && !str.includes('s') && str.trim()) {
+                        totalMinutes = parseInt(str) || 0;
+                    }
+                    
+                    return Math.round(totalMinutes * 100) / 100; // Round to 2 decimal places
+                }
+                
+                function handleConfirm() {
+                    const duration = parseDuration(input.value);
+                    if (duration > 0) {
+                        document.body.removeChild(modal);
+                        resolve(duration);
+                    } else {
+                        alert('Please enter a valid duration (e.g., 30s, 2m30s, 1h30m, 2h)');
+                    }
+                }
+                
+                function handleCancel() {
+                    document.body.removeChild(modal);
+                    resolve(null);
+                }
+                
+                confirmBtn.onclick = handleConfirm;
+                cancelBtn.onclick = handleCancel;
+                
+                // Enter key submits
+                input.onkeypress = (e) => {
+                    if (e.key === 'Enter') handleConfirm();
+                };
+                
+                // Escape key cancels
+                modal.onkeydown = (e) => {
+                    if (e.key === 'Escape') handleCancel();
+                };
+                
+                // Focus the input
+                setTimeout(() => input.focus(), 100);
+            });
+        },
+        
+        async createPlotOutline() {
+            // Show video length modal first (matching Discord bot)
+            const videoLength = await this.showVideoLengthModal();
+            if (!videoLength) {
+                return; // User cancelled
+            }
+            
+            this.generatingOutline = true;
+            this.currentStep = 'outline';
+            
+            try {
+                const response = await fetch('/studio-api/api/create-plot-outline', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                        groupId: this.selectedProject.id,
+                        seriesName: this.selectedSeries.name,
+                        themeName: this.selectedTheme.name,
+                        title: this.selectedTitle,
+                        videoLength: videoLength,
+                        scriptBreakdown: this.scriptBreakdownUrl
+                        })
+                    });
+                
+                    const data = await response.json();
+                    if (data.success) {
+                    // Start polling for completion (like script breakdown)
+                    await this.pollForAsset('plotOutline');
+                } else {
+                    throw new Error(data.error || 'Failed to create plot outline');
+                    }
+                } catch (error) {
+                console.error('Error creating plot outline:', error);
+                alert('Error creating plot outline: ' + error.message);
+            } finally {
+            this.generatingOutline = false;
+                this.currentStep = '';
+            }
+        },
+        
+        async createFullScript() {
+            this.generatingFullScript = true;
+            this.currentStep = 'fullScript';
+            
+            try {
+                const response = await fetch('/studio-api/api/create-full-script', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                        plotOutline: this.plotOutlineUrl,
+                        seriesName: this.selectedSeries.name,
+                        themeName: this.selectedTheme.name,
+                        duration: '30min'
+                        })
+                    });
+                
+                    const data = await response.json();
+                if (data.success && data.fullScript) {
+                    this.fullScript = true;
+                    this.fullScriptUrl = data.fullScript;
+                } else {
+                    throw new Error(data.error || 'Failed to create full script');
+                    }
+                } catch (error) {
+                console.error('Error creating full script:', error);
+                alert('Error creating full script: ' + error.message);
+            } finally {
+                this.generatingFullScript = false;
+                this.currentStep = '';
+            }
+        },
+        
+        selectVoiceMethod(method) {
+            this.voiceMethod = method;
+            this.voiceMethodSelected = true;
+            this.createVoiceOver();
+        },
+        
+        async createThumbnail() {
+            this.generatingThumbnail = true;
+            this.currentStep = 'thumbnail';
+            
+            try {
+                const response = await fetch('/studio-api/api/create-thumbnail', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                        groupId: this.selectedProject.id,
+                        seriesName: this.selectedSeries.name,
+                        themeName: this.selectedTheme.name,
+                            title: this.selectedTitle,
+                        plotOutline: this.plotOutlineUrl
+                        })
+                    });
+                
+                    const data = await response.json();
+                    if (data.success) {
+                    // Start polling for completion
+                    await this.pollForAsset('thumbnail');
+                } else {
+                    throw new Error(data.error || 'Failed to create thumbnail');
+                    }
+                } catch (error) {
+                console.error('Error creating thumbnail:', error);
+                alert('Error creating thumbnail: ' + error.message);
+            } finally {
+            this.generatingThumbnail = false;
+                this.currentStep = '';
+            }
+        },
+        
+        async createVoiceOver() {
+            this.generatingVoice = true;
+            this.currentStep = 'voice';
+            
+            try {
+                const response = await fetch('/studio-api/api/create-voiceover', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                        script: this.fullScriptUrl,
+                        voiceMethod: this.voiceMethod,
+                        voiceId: 'af_nicole'
+                        })
+                    });
+                
+                    const data = await response.json();
+                    if (data.success) {
+                    // Start polling for completion
+                    await this.pollForAsset('voiceover');
+                } else {
+                    throw new Error(data.error || 'Failed to create voiceover');
+                    }
+                } catch (error) {
+                console.error('Error creating voiceover:', error);
+                alert('Error creating voiceover: ' + error.message);
+            } finally {
+            this.generatingVoice = false;
+                this.voiceMethodSelected = false;
+                this.currentStep = '';
+            }
+        },
+        
+        async downloadAssets() {
+            try {
+                const response = await fetch('/studio-api/api/download-assets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                        assets: {
+                            scriptBreakdown: this.scriptBreakdownUrl,
+                            plotOutline: this.plotOutlineUrl,
+                            fullScript: this.fullScriptUrl,
+                            voiceover: this.voiceOverUrl,
+                            thumbnail: this.thumbnailUrl
+                        }
+                        })
+                    });
+                
+                    const data = await response.json();
+                    if (data.success) {
+                    alert('📦 All assets prepared for download!');
+                    // TODO: Trigger actual download
+                } else {
+                    throw new Error(data.error || 'Failed to prepare assets for download');
+                    }
+                } catch (error) {
+                console.error('Error downloading assets:', error);
+                alert('Error downloading assets: ' + error.message);
+            }
+            },
+
+        // Manual Script Functions
+        processManualScript() {
+            if (!this.manualScript.trim()) return;
+            
+            // Extract characters using the same pattern as the backend
+            const dialoguePattern = /\[([^\]]+)\]:\s*((?:[^[]+(?:\[(?![\w\s]+\]:)[^[]*)*)+)/g;
+            const characters = new Set();
+            let match;
+            
+            while ((match = dialoguePattern.exec(this.manualScript)) !== null) {
+                const character = match[1].trim();
+                if (character) {
+                    characters.add(character);
+                }
+            }
+            
+            this.detectedCharacters = Array.from(characters);
+            
+            if (this.detectedCharacters.length === 0) {
+                alert('No characters detected in script. Make sure to use the format [CHARACTER_NAME]: dialogue');
+                return;
+            }
+            
+            // Initialize voice selections
+            this.voiceSelections = {};
+            console.log(`Detected ${this.detectedCharacters.length} characters:`, this.detectedCharacters);
+        },
+
+        async generateManualVoiceOver() {
+            // Validate that all characters have voices selected
+            const missingVoices = this.detectedCharacters.filter(char => !this.voiceSelections[char]);
+            if (missingVoices.length > 0) {
+                alert(`Please select voices for all characters. Missing: ${missingVoices.join(', ')}`);
+                return;
+            }
+
+            this.generatingVoice = true;
+            
+            try {
+                const response = await fetch('/studio-api/api/create-manual-voiceover', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        script: this.manualScript,
+                        voiceSelections: this.voiceSelections,
+                        voiceMethod: this.selectedVoiceService // Use the selected voice service
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // For manual voiceover, we get a Google Drive folder URL immediately
+                    this.voiceOverUrl = data.folder_url;
+                    
+                    // Show success message with link
+                    const serviceName = this.selectedVoiceService === 'elevenlabs' ? 'ElevenLabs' : 'Kokoro';
+                    const message = `✅ Multi-character voiceover generation started using ${serviceName}!\n\nAudio files will be processed and uploaded to:\n${data.folder_url}\n\nProcessing may take 10-15 minutes depending on script length.`;
+                    alert(message);
+                } else {
+                    throw new Error(data.error || 'Failed to create voiceover');
+                }
+            } catch (error) {
+                console.error('Error creating manual voiceover:', error);
+                alert('Error creating voiceover: ' + error.message);
+            } finally {
+                this.generatingVoice = false;
+            }
+            },
+
+            async exportToTrello() {
+                try {
+                const response = await fetch('/studio-api/api/export-to-trello', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                        assets: {
+                            scriptBreakdown: this.scriptBreakdownUrl,
+                            plotOutline: this.plotOutlineUrl,
+                            fullScript: this.fullScriptUrl,
+                            voiceover: this.voiceOverUrl,
+                            thumbnail: this.thumbnailUrl
+                            }
+                        })
+                    });
+                
+                    const data = await response.json();
+                    if (data.success) {
+                    alert('🚀 Content exported to Trello successfully!');
+                } else {
+                    throw new Error(data.error || 'Failed to export to Trello');
+                    }
+                } catch (error) {
+                    console.error('Error exporting to Trello:', error);
+                alert('Error exporting to Trello: ' + error.message);
+            }
+        },
+        
+        // Helper Methods
+        getThemeThumbnail(theme) {
+            return theme?.topics?.[0]?.thumbnail_url || '';
+        },
+        
+        getThemeAvgViews(theme) {
+            if (!theme?.topics) return 0;
+            const totalViews = theme.topics.reduce((sum, topic) => {
+                return sum + (topic.avg_views || topic.views || 0);
+            }, 0);
+            return Math.floor(totalViews / theme.topics.length);
+            },
+
+            formatNumber(num) {
+            return new Intl.NumberFormat().format(num);
+            }
+        }
+    }
+</script>
+{% endblock %}

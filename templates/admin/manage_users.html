@@ -1,0 +1,95 @@
+{% extends 'modern_admin_base.html' %}
+
+{% block title %}Manage Users - Admin - NICOLE{% endblock %}
+{% block page_title %}Manage Users{% endblock %}
+{% block page_description %}View and manage all users{% endblock %}
+
+{% block content %}
+
+<!-- Filters -->
+<div class="glass-effect rounded-xl p-6 mb-6">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+            <label for="type" class="block text-sm font-medium text-gray-700 mb-2">Filter by Type</label>
+            <select name="type" id="type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                <option value="all" {% if filter_type == 'all' %}selected{% endif %}>All Users</option>
+                <option value="admin" {% if filter_type == 'admin' %}selected{% endif %}>Admins Only</option>
+                <option value="premium" {% if filter_type == 'premium' %}selected{% endif %}>Premium Only</option>
+                <option value="beta" {% if filter_type == 'beta' %}selected{% endif %}>Beta Only</option>
+                <option value="designer" {% if filter_type == 'designer' %}selected{% endif %}>Designers Only</option>
+            </select>
+        </div>
+        <div class="md:col-span-2">
+            <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+            <div class="flex gap-2">
+                <input type="text" name="search" id="search" value="{{ search_query }}" 
+                       class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent" 
+                       placeholder="Search by username or Discord ID...">
+                <button type="submit" class="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-2 rounded-lg font-medium hover:from-yellow-600 hover:to-orange-700 transition-all">
+                    🔍 Filter
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Users List -->
+<div class="glass-effect rounded-xl overflow-hidden">
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-4">
+        <h2 class="text-xl font-bold">Users ({{ users|length }})</h2>
+    </div>
+    
+    <div class="p-6">
+        {% if users %}
+        <div class="space-y-4">
+            {% for user in users %}
+            <div class="border border-gray-200 rounded-xl p-6 card-hover bg-white">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <h3 class="text-xl font-bold text-gray-900">{{ user.username }}</h3>
+                            <div class="flex gap-2">
+                                {% if user.is_admin %}
+                                <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">👑 Admin</span>
+                                {% endif %}
+                                {% if user.is_premium %}
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">💎 Premium</span>
+                                {% endif %}
+                                {% if user.is_beta %}
+                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">⭐ Beta</span>
+                                {% endif %}
+                                {% if user.is_thumbnail_designer %}
+                                <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">🎨 Designer</span>
+                                {% endif %}
+                                {% if not (user.is_admin or user.is_premium or user.is_beta or user.is_thumbnail_designer) %}
+                                <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">Free User</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-6 text-sm text-gray-600">
+                            <span>🆔 <code class="text-xs bg-gray-100 px-2 py-1 rounded">{{ user.discord_id }}</code></span>
+                            <span>📅 Joined {{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'Unknown' }}</span>
+                            <span>⏰ Last Active {{ user.last_activity.strftime('%Y-%m-%d') if user.last_activity else 'Never' }}</span>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('admin.view_user', user_id=user.discord_id or user._id) }}" 
+                       class="px-6 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium">
+                        👁️ View
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-4xl">👥</span>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">No users found</h3>
+            <p class="text-gray-600">No users match your search criteria</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

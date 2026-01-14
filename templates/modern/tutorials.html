@@ -1,0 +1,301 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Tutorials & Resources - Nicole AI{% endblock %}
+
+{% block page_title %}Tutorials & Resources{% endblock %}
+{% block page_description %}Learn how to maximize your YouTube automation with step-by-step guides{% endblock %}
+
+{% block content %}
+<div x-data="tutorialsPage()">
+    <!-- Hero Section -->
+    <div class="glass-effect rounded-xl p-8 mb-8 text-center">
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">🎓 Master YouTube Automation</h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            From beginner to expert - everything you need to build and scale your YouTube automation empire
+        </p>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="glass-effect rounded-xl p-6 mb-8">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">🚀 Quick Start Path</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 text-center">
+                <div class="text-2xl mb-2">1️⃣</div>
+                <h4 class="font-semibold text-blue-900 mb-1">Setup</h4>
+                <p class="text-sm text-blue-700">Connect channels & API keys</p>
+            </div>
+            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 text-center">
+                <div class="text-2xl mb-2">2️⃣</div>
+                <h4 class="font-semibold text-green-900 mb-1">Discover</h4>
+                <p class="text-sm text-green-700">Find profitable niches</p>
+            </div>
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 text-center">
+                <div class="text-2xl mb-2">3️⃣</div>
+                <h4 class="font-semibold text-purple-900 mb-1">Automate</h4>
+                <p class="text-sm text-purple-700">Create video campaigns</p>
+            </div>
+            <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 text-center">
+                <div class="text-2xl mb-2">4️⃣</div>
+                <h4 class="font-semibold text-orange-900 mb-1">Scale</h4>
+                <p class="text-sm text-orange-700">Optimize & expand</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="flex flex-wrap gap-2 mb-6">
+        <button @click="selectedCategory = 'all'" 
+                :class="selectedCategory === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'"
+                class="px-4 py-2 rounded-lg font-medium transition-colors">
+            All Tutorials
+        </button>
+        <button @click="selectedCategory = 'getting-started'" 
+                :class="selectedCategory === 'getting-started' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'"
+                class="px-4 py-2 rounded-lg font-medium transition-colors">
+            Getting Started
+        </button>
+        <button @click="selectedCategory = 'automation'" 
+                :class="selectedCategory === 'automation' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'"
+                class="px-4 py-2 rounded-lg font-medium transition-colors">
+            Automation
+        </button>
+        <button @click="selectedCategory = 'optimization'" 
+                :class="selectedCategory === 'optimization' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'"
+                class="px-4 py-2 rounded-lg font-medium transition-colors">
+            Optimization
+        </button>
+        <button @click="selectedCategory = 'advanced'" 
+                :class="selectedCategory === 'advanced' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'"
+                class="px-4 py-2 rounded-lg font-medium transition-colors">
+            Advanced
+        </button>
+    </div>
+
+    <!-- Tutorials Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <template x-for="tutorial in filteredTutorials" :key="tutorial.id">
+            <div class="glass-effect rounded-xl overflow-hidden card-hover">
+                <div class="aspect-video bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                    <div class="text-center text-white">
+                        <div class="text-4xl mb-2" x-text="tutorial.icon"></div>
+                        <button @click="playTutorial(tutorial)" class="bg-white bg-opacity-20 backdrop-blur rounded-full p-3 hover:bg-opacity-30 transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span :class="getCategoryColor(tutorial.category)" 
+                              class="px-2 py-1 rounded-full text-xs font-medium" x-text="tutorial.category"></span>
+                        <span class="text-sm text-gray-600" x-text="tutorial.duration"></span>
+                    </div>
+                    <h4 class="font-bold text-gray-900 mb-2" x-text="tutorial.title"></h4>
+                    <p class="text-gray-600 text-sm mb-4" x-text="tutorial.description"></p>
+                    <div class="flex items-center justify-between">
+                        <span :class="getDifficultyColor(tutorial.difficulty)" 
+                              class="px-3 py-1 rounded-full text-xs font-medium" x-text="tutorial.difficulty"></span>
+                        <button @click="bookmarkTutorial(tutorial)" 
+                                :class="tutorial.bookmarked ? 'text-yellow-500' : 'text-gray-400'"
+                                class="hover:text-yellow-500 transition-colors">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="glass-effect rounded-xl p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-6">💡 Frequently Asked Questions</h3>
+        <div class="space-y-4">
+            <template x-for="(faq, index) in faqs" :key="index">
+                <div class="border border-gray-200 rounded-lg">
+                    <button @click="faq.open = !faq.open" 
+                            class="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors">
+                        <h4 class="font-semibold text-gray-900" x-text="faq.question"></h4>
+                        <svg class="w-5 h-5 transform transition-transform" :class="faq.open ? 'rotate-180' : ''" 
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div x-show="faq.open" x-transition class="px-4 pb-4">
+                        <p class="text-gray-600" x-text="faq.answer"></p>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+
+<script>
+function tutorialsPage() {
+    return {
+        selectedCategory: 'all',
+        
+        tutorials: [
+            {
+                id: 1,
+                title: 'Setting Up Your First Channel',
+                description: 'Connect your YouTube channel and configure basic settings for automation.',
+                category: 'Getting Started',
+                difficulty: 'Beginner',
+                duration: '8 min',
+                icon: '📺',
+                bookmarked: false
+            },
+            {
+                id: 2,
+                title: 'API Keys & Integrations',
+                description: 'Set up all necessary API keys for YouTube, OpenAI, and other services.',
+                category: 'Getting Started',
+                difficulty: 'Beginner',
+                duration: '12 min',
+                icon: '🔑',
+                bookmarked: true
+            },
+            {
+                id: 3,
+                title: 'Finding Profitable Niches',
+                description: 'Use our discovery tools to find high-RPM, low-competition opportunities.',
+                category: 'Getting Started',
+                difficulty: 'Beginner',
+                duration: '15 min',
+                icon: '🔍',
+                bookmarked: false
+            },
+            {
+                id: 4,
+                title: 'Creating Your First Automation',
+                description: 'Step-by-step guide to setting up your first automated video campaign.',
+                category: 'Automation',
+                difficulty: 'Intermediate',
+                duration: '25 min',
+                icon: '🤖',
+                bookmarked: true
+            },
+            {
+                id: 5,
+                title: 'Advanced Scheduling & Upload',
+                description: 'Master complex upload schedules and batch content creation.',
+                category: 'Automation',
+                difficulty: 'Advanced',
+                duration: '18 min',
+                icon: '📅',
+                bookmarked: false
+            },
+            {
+                id: 6,
+                title: 'Thumbnail Optimization',
+                description: 'Create high-converting thumbnails using AI and performance data.',
+                category: 'Optimization',
+                difficulty: 'Intermediate',
+                duration: '20 min',
+                icon: '🎨',
+                bookmarked: false
+            },
+            {
+                id: 7,
+                title: 'Audience Retention Analysis',
+                description: 'Analyze viewer retention and optimize your content accordingly.',
+                category: 'Optimization',
+                difficulty: 'Advanced',
+                duration: '22 min',
+                icon: '⏱️',
+                bookmarked: true
+            },
+            {
+                id: 8,
+                title: 'Live Streaming Automation',
+                description: 'Set up automated live streams for maximum engagement.',
+                category: 'Advanced',
+                difficulty: 'Advanced',
+                duration: '30 min',
+                icon: '📡',
+                bookmarked: false
+            },
+            {
+                id: 9,
+                title: 'Scaling Multiple Channels',
+                description: 'Manage and automate content across multiple YouTube channels.',
+                category: 'Advanced',
+                difficulty: 'Expert',
+                duration: '35 min',
+                icon: '🚀',
+                bookmarked: false
+            }
+        ],
+        
+        faqs: [
+            {
+                question: 'How quickly can I set up my first automation?',
+                answer: 'With our quick start guide, you can have your first automation running within 30-45 minutes. This includes connecting your channel, setting up API keys, and creating your first campaign.',
+                open: false
+            },
+            {
+                question: 'What API keys do I need?',
+                answer: 'You\'ll need YouTube Data API v3, OpenAI API, and optionally Replicate API for advanced features. We provide step-by-step guides for obtaining each one.',
+                open: false
+            },
+            {
+                question: 'Can I use this with brand new channels?',
+                answer: 'Yes! Nicole AI works great with new channels. We recommend starting with 2-3 manual uploads first to establish your channel\'s direction, then transitioning to automation.',
+                open: false
+            },
+            {
+                question: 'How much does automation cost per video?',
+                answer: 'Costs vary based on video length and features used, but typically range from $3-15 per video including AI content generation, voice-over, and thumbnail creation.',
+                open: false
+            },
+            {
+                question: 'Is this against YouTube\'s terms of service?',
+                answer: 'All our automation creates original content using AI and follows YouTube\'s guidelines. We generate unique scripts, thumbnails, and content for each video.',
+                open: false
+            }
+        ],
+        
+        get filteredTutorials() {
+            if (this.selectedCategory === 'all') {
+                return this.tutorials;
+            }
+            return this.tutorials.filter(tutorial => 
+                tutorial.category.toLowerCase().replace(' ', '-') === this.selectedCategory
+            );
+        },
+        
+        getCategoryColor(category) {
+            const colors = {
+                'Getting Started': 'bg-green-100 text-green-700',
+                'Automation': 'bg-blue-100 text-blue-700',
+                'Optimization': 'bg-purple-100 text-purple-700',
+                'Advanced': 'bg-orange-100 text-orange-700'
+            };
+            return colors[category] || 'bg-gray-100 text-gray-700';
+        },
+        
+        getDifficultyColor(difficulty) {
+            const colors = {
+                'Beginner': 'bg-green-100 text-green-700',
+                'Intermediate': 'bg-yellow-100 text-yellow-700',
+                'Advanced': 'bg-orange-100 text-orange-700',
+                'Expert': 'bg-red-100 text-red-700'
+            };
+            return colors[difficulty] || 'bg-gray-100 text-gray-700';
+        },
+        
+        playTutorial(tutorial) {
+            alert(`Playing tutorial: ${tutorial.title}`);
+            // Would open video player or navigate to tutorial page
+        },
+        
+        bookmarkTutorial(tutorial) {
+            tutorial.bookmarked = !tutorial.bookmarked;
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,1540 @@
+{% extends "modern_base.html" %}
+
+{% block title %}{{ campaign.name }} - Nicole AI{% endblock %}
+{% block page_title %}{{ campaign.name }}{% endblock %}
+{% block page_description %}Campaign Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Premium Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    
+    @keyframes pulse-glow {
+        0%, 100% {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+        50% {
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+        }
+    }
+    
+    /* Premium Channel Rows */
+    .channel-row {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .channel-row:hover {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    /* Status Badges with Gradients */
+    .status-testing {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+        font-weight: 600;
+    }
+    
+    .status-scaling {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+        font-weight: 600;
+    }
+    
+    .status-paused {
+        background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+        color: #92400e;
+        font-weight: 600;
+    }
+    
+    .status-archived {
+        background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+        color: #374151;
+        font-weight: 600;
+    }
+    
+    .status-active {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+        font-weight: 600;
+        animation: pulse-glow 3s ease-in-out infinite;
+    }
+    
+    .status-ended {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+        font-weight: 600;
+    }
+    
+    /* Platform Buttons */
+    .btn-youtube {
+        background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%);
+        box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-youtube:hover {
+        box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+        transform: translateY(-2px);
+    }
+    
+    .btn-instagram {
+        background: linear-gradient(135deg, #E1306C 0%, #C13584 50%, #F56040 100%);
+        box-shadow: 0 4px 15px rgba(225, 48, 108, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-instagram:hover {
+        box-shadow: 0 6px 20px rgba(225, 48, 108, 0.4);
+        transform: translateY(-2px);
+    }
+    
+    .btn-tiktok {
+        background: linear-gradient(135deg, #00F2EA 0%, #FF0050 100%);
+        box-shadow: 0 4px 15px rgba(0, 242, 234, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-tiktok:hover {
+        box-shadow: 0 6px 20px rgba(0, 242, 234, 0.4);
+        transform: translateY(-2px);
+    }
+    
+    /* Premium Action Buttons */
+    .quick-action-btn {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .quick-action-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .quick-action-btn:active {
+        transform: scale(0.98);
+    }
+    
+    /* Modal Animations */
+    .modal-backdrop {
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        animation: fadeIn 0.2s ease;
+    }
+    
+    .modal-content {
+        animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    /* Glassmorphism Cards */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .glass-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
+    }
+</style>
+<script>
+window.campaignId = '{{ campaign._id }}';
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- Campaign Header -->
+<div class="glass-effect rounded-xl p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center space-x-4">
+            <a href="{{ url_for('campaigns.campaigns_list') }}" 
+               class="text-gray-600 hover:text-gray-900">
+                ← Back to Campaigns
+            </a>
+            <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                {% if campaign.objective == 'ecommerce' %}🛍️
+                {% elif campaign.objective == 'cashcow' %}💰
+                {% else %}📢{% endif %}
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">{{ campaign.name }}</h1>
+                <div class="flex items-center space-x-3 mt-1">
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold {% if campaign.status == 'active' %}bg-green-100 text-green-700{% elif campaign.status == 'paused' %}bg-orange-100 text-orange-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                        {{ campaign.status | title }}
+                    </span>
+                    <span class="text-sm text-gray-600">{{ campaign.objective | replace('_', ' ') | title }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-3">
+            <button onclick="addYouTubeChannel()" 
+                    class="px-5 py-2.5 btn-youtube text-white rounded-lg font-semibold flex items-center space-x-2 shadow-lg">
+                <span>▶️</span>
+                <span>Add YouTube</span>
+            </button>
+            <button onclick="addInstagramChannel()" 
+                    class="px-5 py-2.5 btn-instagram text-white rounded-lg font-semibold flex items-center space-x-2 shadow-lg">
+                <span>📷</span>
+                <span>Add Instagram</span>
+            </button>
+            <button onclick="addTikTokChannel()" 
+                    class="px-5 py-2.5 btn-tiktok text-white rounded-lg font-semibold flex items-center space-x-2 shadow-lg">
+                <span>🎵</span>
+                <span>Add TikTok</span>
+            </button>
+            <a href="{{ url_for('campaigns.campaign_analytics', campaign_id=campaign._id) }}" 
+               class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg text-gray-700">
+                📊 Analytics
+            </a>
+        </div>
+    </div>
+    
+    <!-- Campaign Stats -->
+    <div class="grid grid-cols-5 gap-4 mt-6 pt-6 border-t border-gray-200">
+        <div>
+            <p class="text-sm text-gray-600 mb-1">Total Channels</p>
+            <p class="text-3xl font-bold text-gray-900">{{ channels|length }}</p>
+            <p class="text-xs text-green-600">{{ channels|selectattr('status', 'in', ['testing', 'scaling'])|list|length }} active</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-600 mb-1">Total Views</p>
+            <p class="text-3xl font-bold text-gray-900">
+                {% if analytics_summary.total_views >= 1000000 %}
+                    {{ '%0.1f' | format(analytics_summary.total_views / 1000000) }}M
+                {% elif analytics_summary.total_views >= 1000 %}
+                    {{ '%0.1f' | format(analytics_summary.total_views / 1000) }}K
+                {% else %}
+                    {{ analytics_summary.total_views }}
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-600 mb-1">Revenue</p>
+            <p class="text-3xl font-bold text-green-600">${{ '%0.2f' | format(analytics_summary.total_revenue) }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-600 mb-1">API Cost</p>
+            <p class="text-3xl font-bold text-orange-600">${{ '%0.2f' | format(analytics_summary.total_cost) }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-600 mb-1">ROI</p>
+            <p class="text-3xl font-bold {% if analytics_summary.roi > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {{ '%0.0f' | format(analytics_summary.roi) }}%
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Channels List (Ads Manager Style) -->
+<div class="glass-effect rounded-xl overflow-hidden">
+    <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+        <h2 class="text-xl font-bold text-gray-900">Channels</h2>
+    </div>
+    
+    {% if channels %}
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Channel</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content Strategy</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Videos/Day</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Daily Spend</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Today's Cost</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Videos</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for channel in channels %}
+                <tr class="channel-row">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold">
+                                {{ channel.channel_name[0] if channel.channel_name else 'C' }}
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">{{ channel.channel_name }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                            {% if channel.platform == 'youtube' %}📺 YouTube
+                            {% elif channel.platform == 'instagram' %}📷 Instagram
+                            {% elif channel.platform == 'tiktok' %}🎵 TikTok
+                            {% else %}{{ channel.platform | capitalize }}{% endif %}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if channel.content_strategy %}
+                            {% set strategy = channel.content_strategy %}
+                            <div class="text-sm">
+                                <p class="font-medium text-gray-900">
+                                    {% if strategy.source == 'campaign_default' %}Campaign Default
+                                    {% elif strategy.source == 'group_assigned' %}Group: {{ strategy.group_name or 'Unknown' }}
+                                    {% else %}Custom{% endif %}
+                                </p>
+                                {% if strategy.content_style_name %}
+                                <p class="text-xs text-gray-500">{{ strategy.content_style_name }}</p>
+                                {% endif %}
+                            </div>
+                            <button onclick="editChannelStrategy('{{ channel._id }}')" 
+                                    class="text-xs text-indigo-600 hover:text-indigo-700 mt-1">
+                                Edit
+                            </button>
+                        {% else %}
+                            <span class="text-xs text-gray-400">Not set</span>
+                            <button onclick="editChannelStrategy('{{ channel._id }}')" 
+                                    class="text-xs text-indigo-600 hover:text-indigo-700 ml-2">
+                                Set Strategy
+                            </button>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold status-{{ channel.status }}">
+                            {{ channel.status | title }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                        {% if channel.videos_per_day %}
+                            {{ channel.videos_per_day }}/day
+                            <span class="text-xs text-gray-500">({{ '%0.1f' | format(24 / channel.videos_per_day) }}h)</span>
+                        {% elif channel.upload_frequency %}
+                            <span class="text-xs text-gray-500">{{ channel.upload_frequency | replace('_', ' ') | title }}</span>
+                        {% else %}
+                            <span class="text-xs text-gray-400">Not set</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm font-medium text-blue-600">
+                        {% if channel.daily_production_spend %}
+                            ${{ '%0.2f' | format(channel.daily_production_spend) }}
+                        {% else %}
+                            <span class="text-gray-400">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm font-medium text-orange-600">
+                        {% if channel.production_cost %}
+                            ${{ '%0.2f' | format(channel.production_cost) }}
+                        {% else %}
+                            $0.00
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm font-medium text-purple-600">
+                        {% if channel.total_production_cost %}
+                            ${{ '%0.2f' | format(channel.total_production_cost) }}
+                        {% else %}
+                            $0.00
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                        {{ channel.total_videos_produced or channel.videos_published or 0 }}
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        <div class="flex flex-wrap gap-2">
+                            <!-- Status Controls -->
+                            {% if channel.status == 'testing' or channel.status == 'scaling' or channel.status == 'active' %}
+                            <button onclick="pauseChannel('{{ channel._id }}')" 
+                                    class="px-3 py-1.5 bg-gradient-to-r from-orange-100 to-amber-100 text-orange-700 hover:from-orange-200 hover:to-amber-200 rounded-lg font-semibold text-xs quick-action-btn shadow-sm">
+                                ⏸️ Pause
+                            </button>
+                            <button onclick="disableChannel('{{ channel._id }}')" 
+                                    class="px-3 py-1.5 bg-gradient-to-r from-gray-100 to-slate-100 text-gray-700 hover:from-gray-200 hover:to-slate-200 rounded-lg font-semibold text-xs quick-action-btn shadow-sm">
+                                🚫 Disable
+                            </button>
+                            {% elif channel.status == 'paused' %}
+                            <button onclick="activateChannel('{{ channel._id }}')" 
+                                    class="px-3 py-1.5 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200 rounded-lg font-semibold text-xs quick-action-btn shadow-sm">
+                                ▶️ Activate
+                            </button>
+                            <button onclick="disableChannel('{{ channel._id }}')" 
+                                    class="px-3 py-1.5 bg-gradient-to-r from-gray-100 to-slate-100 text-gray-700 hover:from-gray-200 hover:to-slate-200 rounded-lg font-semibold text-xs quick-action-btn shadow-sm">
+                                🚫 Disable
+                            </button>
+                            {% elif channel.status == 'disabled' %}
+                            <button onclick="activateChannel('{{ channel._id }}')" 
+                                    class="px-3 py-1.5 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200 rounded-lg font-semibold text-xs quick-action-btn shadow-sm">
+                                ▶️ Enable
+                            </button>
+                            {% endif %}
+                            
+                            <button onclick="endChannel('{{ channel._id }}')" 
+                                    class="px-3 py-1.5 bg-gradient-to-r from-red-100 to-rose-100 text-red-700 hover:from-red-200 hover:to-rose-200 rounded-lg font-semibold text-xs quick-action-btn shadow-sm">
+                                ⏹️ End
+                            </button>
+                            
+                            <!-- Quick Edit Buttons -->
+                            <button onclick="quickEditProduct('{{ channel._id }}', '{{ channel.product_id }}')" 
+                                    class="px-3 py-1.5 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 hover:from-purple-200 hover:to-pink-200 rounded-lg font-semibold text-xs quick-action-btn shadow-sm">
+                                🛍️ Product
+                            </button>
+                            
+                            <button onclick="quickEditFrequency('{{ channel._id }}', '{{ channel.videos_per_day or channel.upload_frequency }}')" 
+                                    class="px-3 py-1.5 bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 hover:from-blue-200 hover:to-cyan-200 rounded-lg font-semibold text-xs quick-action-btn shadow-sm">
+                                📅 Frequency
+                            </button>
+                            
+                            <button onclick="quickEditSpend('{{ channel._id }}', '{{ channel.daily_production_spend or 0 }}')" 
+                                    class="px-3 py-1.5 bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-700 hover:from-yellow-200 hover:to-amber-200 rounded-lg font-semibold text-xs quick-action-btn shadow-sm">
+                                💰 Spend
+                            </button>
+                            
+                            {% if channel.platform == 'youtube' %}
+                            <button onclick="quickEditVoice('{{ channel._id }}', '{{ channel.voice_type }}', '{{ channel.voice_id }}')" 
+                                    class="px-3 py-1.5 bg-gradient-to-r from-teal-100 to-green-100 text-teal-700 hover:from-teal-200 hover:to-green-200 rounded-lg font-semibold text-xs quick-action-btn shadow-sm">
+                                🎙️ Voice
+                            </button>
+                            {% endif %}
+                            
+                            {% if channel.platform in ['tiktok', 'instagram'] %}
+                            <button onclick="quickEditAvatar('{{ channel._id }}', '{{ channel.avatar_url }}')" 
+                                    class="px-3 py-1.5 bg-gradient-to-r from-pink-100 to-rose-100 text-pink-700 hover:from-pink-200 hover:to-rose-200 rounded-lg font-semibold text-xs quick-action-btn shadow-sm">
+                                👤 Avatar
+                            </button>
+                            
+                            <!-- Connect Account Button -->
+                            {% if channel.platform == 'tiktok' %}
+                            <button onclick="connectTikTokAccount('{{ campaign._id }}', '{{ channel._id }}')" 
+                                    class="px-3 py-1.5 bg-gradient-to-r {% if channel.access_token %}from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200{% else %}from-blue-100 to-cyan-100 text-blue-700 hover:from-blue-200 hover:to-cyan-200{% endif %} rounded-lg font-semibold text-xs quick-action-btn shadow-sm"
+                                    title="{% if channel.access_token %}Connected{% else %}Connect TikTok Account{% endif %}">
+                                {% if channel.access_token %}✅ Connected{% else %}🔗 Connect{% endif %}
+                            </button>
+                            {% elif channel.platform == 'instagram' %}
+                            <button onclick="connectInstagramAccount('{{ campaign._id }}', '{{ channel._id }}')" 
+                                    class="px-3 py-1.5 bg-gradient-to-r {% if channel.access_token %}from-green-100 to-emerald-100 text-green-700 hover:from-green-200 hover:to-emerald-200{% else %}from-blue-100 to-cyan-100 text-blue-700 hover:from-blue-200 hover:to-cyan-200{% endif %} rounded-lg font-semibold text-xs quick-action-btn shadow-sm"
+                                    title="{% if channel.access_token %}Connected{% else %}Connect Instagram Account{% endif %}">
+                                {% if channel.access_token %}✅ Connected{% else %}🔗 Connect{% endif %}
+                            </button>
+                            {% endif %}
+                            {% endif %}
+                            
+                            <button onclick="viewChannelAnalytics('{{ channel._id }}')" 
+                                    class="px-3 py-1.5 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 hover:from-indigo-200 hover:to-purple-200 rounded-lg font-semibold text-xs quick-action-btn shadow-sm">
+                                📊
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="p-12 text-center">
+        <div class="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <span class="text-3xl">📺</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">No Channels Yet</h3>
+        <p class="text-gray-600 mb-4">Add channels to start automating content for this campaign</p>
+        <div class="flex items-center justify-center space-x-3">
+            <button onclick="addYouTubeChannel()" 
+                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center space-x-2">
+                <span>▶️</span>
+                <span>Add YouTube</span>
+            </button>
+            <button onclick="addInstagramChannel()" 
+                    class="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-lg font-medium transition-colors flex items-center space-x-2">
+                <span>📷</span>
+                <span>Add Instagram</span>
+            </button>
+            <button onclick="addTikTokChannel()" 
+                    class="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg font-medium transition-colors flex items-center space-x-2">
+                <span>🎵</span>
+                <span>Add TikTok</span>
+        </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Cost Breakdown -->
+{% if cost_breakdown.total > 0 %}
+<div class="glass-effect rounded-xl p-6 mt-6">
+    <h3 class="text-lg font-bold text-gray-900 mb-4">API Cost Breakdown (Last 30 Days)</h3>
+    <div class="grid grid-cols-4 gap-4">
+        <div>
+            <p class="text-sm text-gray-600 mb-1">Anthropic (Claude)</p>
+            <p class="text-2xl font-bold text-gray-900">${{ '%0.2f' | format(cost_breakdown.anthropic) }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-600 mb-1">ElevenLabs (Voice)</p>
+            <p class="text-2xl font-bold text-gray-900">${{ '%0.2f' | format(cost_breakdown.elevenlabs) }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-600 mb-1">Replicate (Images)</p>
+            <p class="text-2xl font-bold text-gray-900">${{ '%0.2f' | format(cost_breakdown.replicate) }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-600 mb-1">Total</p>
+            <p class="text-2xl font-bold text-orange-600">${{ '%0.2f' | format(cost_breakdown.total) }}</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Include Strategy Modal -->
+{% include 'modern/channel_strategy_modal.html' %}
+
+<script>
+function pauseChannel(channelId) {
+    if (!confirm('Pause this channel?')) return;
+    
+    fetch(`/campaigns/{{ campaign._id }}/channels/${channelId}/status`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: 'paused'})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+}
+
+function resumeChannel(channelId) {
+    fetch(`/campaigns/{{ campaign._id }}/channels/${channelId}/status`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: 'testing'})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+}
+
+function disableChannel(channelId) {
+    if (!confirm('Disable this channel? Production will stop permanently until re-enabled.')) return;
+    
+    fetch(`/campaigns/{{ campaign._id }}/channels/${channelId}/status`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: 'disabled'})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => alert('Error: ' + error.message));
+}
+
+function activateChannel(channelId) {
+    if (!confirm('Start production immediately on this channel?')) return;
+    
+    fetch(`/campaigns/{{ campaign._id }}/channels/${channelId}/status`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: 'active'})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+}
+
+function endChannel(channelId) {
+    if (!confirm('Permanently end this channel? This cannot be undone.')) return;
+    
+    fetch(`/campaigns/{{ campaign._id }}/channels/${channelId}/end`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+}
+
+function viewChannelAnalytics(channelId) {
+    // TODO: Implement channel-specific analytics view
+    alert('Channel analytics coming soon!');
+}
+
+function addChannel() {
+    // Show add channel modal
+    document.dispatchEvent(new CustomEvent('showAddChannelModal'));
+}
+
+function showAddChannelModal() {
+    // Trigger the modal
+    addChannel();
+}
+
+function editChannelStrategy(channelId) {
+    // Load strategy modal data and show
+    if (channelId) {
+        // Edit existing channel
+        fetch(`/campaigns/{{ campaign._id }}/channels/${channelId}/edit-strategy`)
+            .then(r => r.json())
+            .then(data => {
+                // Initialize strategy modal with channel data
+                window.strategyModalData = {
+                    channelId: channelId,
+                    currentStrategy: data.strategy,
+                    userGroups: data.user_groups,
+                    contentStyles: data.content_styles
+                };
+                // Show modal (Alpine.js will handle)
+                document.dispatchEvent(new CustomEvent('showStrategyModal', {detail: {channelId: channelId}}));
+            });
+    } else {
+        // New channel - get campaign default
+        fetch(`/campaigns/{{ campaign._id }}/default-strategy`)
+            .then(r => r.json())
+            .then(data => {
+                window.strategyModalData = {
+                    channelId: null,
+                    campaignDefaultStrategy: data.default_strategy,
+                    userGroups: data.user_groups,
+                    contentStyles: data.content_styles
+                };
+                document.dispatchEvent(new CustomEvent('showStrategyModal', {detail: {channelId: null}}));
+            });
+    }
+}
+
+function startProduction() {
+    const videoCount = prompt('How many videos to produce?', '10');
+    if (!videoCount) return;
+    
+    if (!confirm(`Start production of ${videoCount} videos for all active channels?`)) return;
+    
+    fetch('/campaigns/{{ campaign._id }}/start-production', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({video_count: parseInt(videoCount)})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Production started! ${data.message}`);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+// Add Channel Modal Functions
+function addYouTubeChannel() {
+    document.getElementById('platformName').textContent = 'YouTube';
+    document.getElementById('channelPlatform').value = 'youtube';
+    document.getElementById('urlLabel').textContent = 'Channel URL';
+    document.getElementById('channelUrl').placeholder = 'https://youtube.com/@channelname';
+    
+    // Show/hide platform-specific fields
+    document.getElementById('youtubeFields').classList.remove('hidden');
+    document.getElementById('tiktokFields').classList.add('hidden');
+    document.getElementById('instagramFields').classList.add('hidden');
+    document.getElementById('avatarField').classList.add('hidden');
+    
+    // Make YouTube fields required
+    document.querySelector('[name="video_duration"]').setAttribute('required', 'required');
+    document.querySelector('[name="group_id"]').setAttribute('required', 'required');
+    
+    // Remove required from TikTok/IG fields
+    document.querySelector('[name="tiktok_content_style"]').removeAttribute('required');
+    document.querySelector('[name="instagram_post_type"]').removeAttribute('required');
+    
+    loadModalData();
+    document.getElementById('addChannelModal').classList.remove('hidden');
+}
+
+function addInstagramChannel() {
+    document.getElementById('platformName').textContent = 'Instagram';
+    document.getElementById('channelPlatform').value = 'instagram';
+    document.getElementById('urlLabel').textContent = 'Instagram Username/URL';
+    document.getElementById('channelUrl').placeholder = 'https://instagram.com/username or @username';
+    
+    // Show/hide platform-specific fields
+    document.getElementById('youtubeFields').classList.add('hidden');
+    document.getElementById('tiktokFields').classList.add('hidden');
+    document.getElementById('instagramFields').classList.remove('hidden');
+    document.getElementById('avatarField').classList.remove('hidden');
+    
+    // Make Instagram fields required
+    document.querySelector('[name="instagram_post_type"]').setAttribute('required', 'required');
+    
+    // Remove required from YouTube/TikTok fields
+    document.querySelector('[name="video_duration"]').removeAttribute('required');
+    document.querySelector('[name="group_id"]').removeAttribute('required');
+    document.querySelector('[name="tiktok_content_style"]').removeAttribute('required');
+    
+    loadModalData();
+    document.getElementById('addChannelModal').classList.remove('hidden');
+}
+
+function addTikTokChannel() {
+    document.getElementById('platformName').textContent = 'TikTok';
+    document.getElementById('channelPlatform').value = 'tiktok';
+    document.getElementById('urlLabel').textContent = 'TikTok Username/URL';
+    document.getElementById('channelUrl').placeholder = 'https://tiktok.com/@username or @username';
+    
+    // Show/hide platform-specific fields
+    document.getElementById('youtubeFields').classList.add('hidden');
+    document.getElementById('tiktokFields').classList.remove('hidden');
+    document.getElementById('instagramFields').classList.add('hidden');
+    document.getElementById('avatarField').classList.remove('hidden');
+    
+    // Make TikTok fields required
+    document.querySelector('[name="tiktok_content_style"]').setAttribute('required', 'required');
+    
+    // Remove required from YouTube/IG fields
+    document.querySelector('[name="video_duration"]').removeAttribute('required');
+    document.querySelector('[name="group_id"]').removeAttribute('required');
+    document.querySelector('[name="instagram_post_type"]').removeAttribute('required');
+    
+    loadModalData();
+    document.getElementById('addChannelModal').classList.remove('hidden');
+}
+
+function closeAddChannelModal() {
+    document.getElementById('addChannelModal').classList.add('hidden');
+    document.getElementById('addChannelForm').reset();
+    document.getElementById('voiceSelectionDiv').classList.add('hidden');
+}
+
+async function loadModalData() {
+    const productSelect = document.querySelector('select[name="product_id"]');
+    const groupSelect = document.querySelector('select[name="group_id"]');
+    const styleSelect = document.querySelector('select[name="content_style_id"]');
+    
+    try {
+        // Fetch all data in parallel
+        const [productsRes, groupsRes, stylesRes] = await Promise.all([
+            fetch('/products/api/list'),
+            fetch('/campaigns/api/user-groups'),
+            fetch('/content-styles/api/list')
+        ]);
+        
+        const productsData = await productsRes.json();
+        const groupsData = await groupsRes.json();
+        const stylesData = await stylesRes.json();
+        
+        console.log('Products response:', productsData);
+        console.log('Groups response:', groupsData);
+        console.log('Styles response:', stylesData);
+        
+        // Handle products response - API returns {success: true, products: [...]}
+        const productsList = productsData.success && productsData.products ? productsData.products : [];
+        
+        // Populate products
+        productSelect.innerHTML = '<option value="">Select Product</option>';
+        productsList.forEach(p => {
+            const priceText = p.price ? ` ($${parseFloat(p.price).toFixed(2)})` : '';
+            productSelect.innerHTML += `<option value="${p._id}">${p.name}${priceText}</option>`;
+        });
+        
+        if (productsList.length === 0) {
+            productSelect.innerHTML += '<option value="" disabled>No products found - create one first</option>';
+        }
+        
+        // Handle groups response - API returns {success: true, groups: [...]}
+        const groupsList = groupsData.success && groupsData.groups ? groupsData.groups : [];
+        
+        // Populate groups
+        groupSelect.innerHTML = '<option value="">Select Group</option>';
+        groupsList.forEach(g => {
+            groupSelect.innerHTML += `<option value="${g._id}">${g.name || 'Unnamed Group'}</option>`;
+        });
+        
+        if (groupsList.length === 0) {
+            groupSelect.innerHTML += '<option value="" disabled>No groups found - create one first</option>';
+        }
+        
+        // Handle styles response - check if it's array or object
+        let stylesList = [];
+        if (Array.isArray(stylesData)) {
+            stylesList = stylesData;
+        } else if (stylesData.success && Array.isArray(stylesData.styles)) {
+            stylesList = stylesData.styles;
+        } else if (stylesData.content_styles) {
+            stylesList = stylesData.content_styles;
+        }
+        
+        // Populate content styles
+        styleSelect.innerHTML = '<option value="">Select Content Style</option>';
+        stylesList.forEach(s => {
+            const platform = s.platform ? ` (${s.platform})` : '';
+            styleSelect.innerHTML += `<option value="${s._id}">${s.name}${platform}</option>`;
+        });
+        
+        if (stylesList.length === 0) {
+            styleSelect.innerHTML += '<option value="" disabled>No content styles found - create one first</option>';
+        }
+        
+        console.log(`Loaded: ${productsList.length} products, ${groupsList.length} groups, ${stylesList.length} styles`);
+    } catch (error) {
+        console.error('Error loading modal data:', error);
+        alert('Error loading form data. Please try again.');
+    }
+}
+
+async function loadVoices() {
+    const voiceType = document.getElementById('voiceType').value;
+    const voiceSelect = document.getElementById('voiceSelect');
+    const voiceDiv = document.getElementById('voiceSelectionDiv');
+    
+    if (!voiceType) {
+        voiceDiv.classList.add('hidden');
+        return;
+    }
+    
+    voiceDiv.classList.remove('hidden');
+    
+    // Define available voices
+    const elevenLabsVoices = [
+        {id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel - Clear & Engaging'},
+        {id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella - Young & Energetic'},
+        {id: 'ErXwobaYiN019PkySvjV', name: 'Antoni - Male Confident'},
+        {id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli - Female Friendly'},
+        {id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh - Male Deep'},
+        {id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold - Male Crisp'}
+    ];
+    
+    const kokoroVoices = [
+        {id: 'af_nicole', name: 'Nicole - American Female'},
+        {id: 'af_sarah', name: 'Sarah - American Female'},
+        {id: 'am_adam', name: 'Adam - American Male'},
+        {id: 'am_michael', name: 'Michael - American Male'},
+        {id: 'bf_emma', name: 'Emma - British Female'},
+        {id: 'bm_george', name: 'George - British Male'}
+    ];
+    
+    const voices = voiceType === 'elevenlabs' ? elevenLabsVoices : kokoroVoices;
+    
+    voiceSelect.innerHTML = '<option value="">Select Voice</option>';
+    voices.forEach(v => {
+        voiceSelect.innerHTML += `<option value="${v.id}">${v.name}</option>`;
+    });
+}
+
+// Form submission handler
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('addChannelForm');
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            data.campaign_id = '{{ campaign._id }}';
+            
+            try {
+                const response = await fetch('/campaigns/{{ campaign._id }}/add-channel', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to add channel'));
+                }
+            } catch (error) {
+                alert('Error adding channel: ' + error.message);
+            }
+        });
+    }
+});
+
+// Quick Edit Functions
+async function quickEditProduct(channelId, currentProductId) {
+    document.getElementById('qeProductChannelId').value = channelId;
+    
+    // Load products
+    try {
+        const response = await fetch('/products/api/list');
+        const data = await response.json();
+        const products = data.success ? data.products : [];
+        
+        const select = document.getElementById('qeProductSelect');
+        select.innerHTML = '<option value="">Select Product</option>';
+        products.forEach(p => {
+            const selected = p._id === currentProductId ? 'selected' : '';
+            select.innerHTML += `<option value="${p._id}" ${selected}>${p.name}</option>`;
+        });
+    } catch (error) {
+        console.error('Error loading products:', error);
+    }
+    
+    document.getElementById('quickEditProductModal').classList.remove('hidden');
+}
+
+function closeQuickEditProduct() {
+    document.getElementById('quickEditProductModal').classList.add('hidden');
+}
+
+async function submitQuickEditProduct(e) {
+    e.preventDefault();
+    const channelId = document.getElementById('qeProductChannelId').value;
+    const productId = document.getElementById('qeProductSelect').value;
+    
+    try {
+        const response = await fetch(`/campaigns/{{ campaign._id }}/channels/${channelId}/update-product`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({product_id: productId})
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function quickEditFrequency(channelId, currentValue) {
+    document.getElementById('qeFrequencyChannelId').value = channelId;
+    // Handle both videos_per_day (number) and legacy frequency (string)
+    if (typeof currentValue === 'number' || (typeof currentValue === 'string' && !isNaN(currentValue))) {
+        document.getElementById('qeVideosPerDay').value = currentValue || 1;
+    } else {
+        // Legacy frequency string - convert to videos_per_day
+        const freqMap = {
+            'daily': 1,
+            'twice_daily': 2,
+            'three_times_daily': 3,
+            'every_2_days': 0.5,
+            'every_3_days': 0.33,
+            'weekly': 0.14
+        };
+        document.getElementById('qeVideosPerDay').value = freqMap[currentValue] || 1;
+    }
+    document.getElementById('quickEditFrequencyModal').classList.remove('hidden');
+    updateFrequencyPreview();
+}
+
+function quickEditSpend(channelId, currentSpend) {
+    document.getElementById('qeSpendChannelId').value = channelId;
+    document.getElementById('qeDailySpend').value = currentSpend || '';
+    document.getElementById('quickEditSpendModal').classList.remove('hidden');
+}
+
+function closeQuickEditFrequency() {
+    document.getElementById('quickEditFrequencyModal').classList.add('hidden');
+}
+
+function updateFrequencyPreview() {
+    const videosPerDay = parseInt(document.getElementById('qeVideosPerDay').value) || 1;
+    const hoursBetween = (24 / videosPerDay).toFixed(1);
+    const preview = document.getElementById('frequencyPreview');
+    if (preview) {
+        preview.textContent = `${videosPerDay} video${videosPerDay !== 1 ? 's' : ''} per day (every ${hoursBetween} hours)`;
+    }
+}
+
+async function submitQuickEditFrequency(e) {
+    e.preventDefault();
+    const channelId = document.getElementById('qeFrequencyChannelId').value;
+    const videosPerDay = parseInt(document.getElementById('qeVideosPerDay').value);
+    
+    if (videosPerDay < 1 || videosPerDay > 10) {
+        alert('Videos per day must be between 1 and 10');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/campaigns/{{ campaign._id }}/channels/${channelId}/update-frequency`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({videos_per_day: videosPerDay})
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function submitQuickEditSpend(e) {
+    e.preventDefault();
+    const channelId = document.getElementById('qeSpendChannelId').value;
+    const dailySpend = parseFloat(document.getElementById('qeDailySpend').value);
+    
+    if (isNaN(dailySpend) || dailySpend < 0) {
+        alert('Daily spend must be a positive number');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/campaigns/{{ campaign._id }}/channels/${channelId}/update-spend`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({daily_production_spend: dailySpend})
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function closeQuickEditSpend() {
+    document.getElementById('quickEditSpendModal').classList.add('hidden');
+}
+
+function updateVideosPerDayPreview(videosPerDay) {
+    const videos = parseInt(videosPerDay) || 1;
+    const hoursBetween = (24 / videos).toFixed(1);
+    const preview = document.getElementById('videosPerDayPreview');
+    if (preview) {
+        preview.textContent = `${videos} video${videos !== 1 ? 's' : ''} per day (every ${hoursBetween} hours)`;
+    }
+}
+
+function quickEditVoice(channelId, currentVoiceType, currentVoiceId) {
+    document.getElementById('qeVoiceChannelId').value = channelId;
+    document.getElementById('qeVoiceType').value = currentVoiceType || 'kokoro';
+    loadQuickEditVoices();
+    setTimeout(() => {
+        document.getElementById('qeVoiceId').value = currentVoiceId || '';
+    }, 100);
+    document.getElementById('quickEditVoiceModal').classList.remove('hidden');
+}
+
+function closeQuickEditVoice() {
+    document.getElementById('quickEditVoiceModal').classList.add('hidden');
+}
+
+function loadQuickEditVoices() {
+    const voiceType = document.getElementById('qeVoiceType').value;
+    const voiceSelect = document.getElementById('qeVoiceId');
+    
+    const elevenLabsVoices = [
+        {id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel - Clear & Engaging'},
+        {id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella - Young & Energetic'},
+        {id: 'ErXwobaYiN019PkySvjV', name: 'Antoni - Male Confident'},
+        {id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli - Female Friendly'},
+        {id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh - Male Deep'},
+        {id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold - Male Crisp'}
+    ];
+    
+    const kokoroVoices = [
+        {id: 'af_nicole', name: 'Nicole - American Female'},
+        {id: 'af_sarah', name: 'Sarah - American Female'},
+        {id: 'am_adam', name: 'Adam - American Male'},
+        {id: 'am_michael', name: 'Michael - American Male'},
+        {id: 'bf_emma', name: 'Emma - British Female'},
+        {id: 'bm_george', name: 'George - British Male'}
+    ];
+    
+    const voices = voiceType === 'elevenlabs' ? elevenLabsVoices : kokoroVoices;
+    
+    voiceSelect.innerHTML = '<option value="">Select Voice</option>';
+    voices.forEach(v => {
+        voiceSelect.innerHTML += `<option value="${v.id}">${v.name}</option>`;
+    });
+}
+
+async function submitQuickEditVoice(e) {
+    e.preventDefault();
+    const channelId = document.getElementById('qeVoiceChannelId').value;
+    const voiceType = document.getElementById('qeVoiceType').value;
+    const voiceId = document.getElementById('qeVoiceId').value;
+    
+    try {
+        const response = await fetch(`/campaigns/{{ campaign._id }}/channels/${channelId}/update-voice`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({voice_type: voiceType, voice_id: voiceId})
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function quickEditAvatar(channelId, currentAvatarUrl) {
+    document.getElementById('qeAvatarChannelId').value = channelId;
+    document.getElementById('qeAvatarUrl').value = currentAvatarUrl || '';
+    document.getElementById('quickEditAvatarModal').classList.remove('hidden');
+}
+
+function closeQuickEditAvatar() {
+    document.getElementById('quickEditAvatarModal').classList.add('hidden');
+}
+
+async function connectTikTokAccount(campaignId, channelId) {
+    try {
+        const response = await fetch(`/campaigns/${campaignId}/channels/${channelId}/connect-tiktok`);
+        const result = await response.json();
+        
+        if (result.success) {
+            // Open OAuth URL in new window
+            window.location.href = result.oauth_url;
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error connecting TikTok account: ' + error.message);
+    }
+}
+
+async function connectInstagramAccount(campaignId, channelId) {
+    try {
+        const response = await fetch(`/campaigns/${campaignId}/channels/${channelId}/connect-instagram`);
+        const result = await response.json();
+        
+        if (result.success) {
+            // Open OAuth URL in new window
+            window.location.href = result.oauth_url;
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error connecting Instagram account: ' + error.message);
+    }
+}
+
+async function submitQuickEditAvatar(e) {
+    e.preventDefault();
+    const channelId = document.getElementById('qeAvatarChannelId').value;
+    const avatarUrl = document.getElementById('qeAvatarUrl').value;
+    
+    try {
+        const response = await fetch(`/campaigns/{{ campaign._id }}/channels/${channelId}/update-avatar`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({avatar_url: avatarUrl})
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Avatar Image Upload Functions
+async function handleAvatarUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Validate file
+    if (!file.type.match('image/(png|jpeg|jpg)')) {
+        alert('Please upload a PNG or JPG image');
+        return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+        alert('Image must be under 10MB');
+        return;
+    }
+    
+    // Show loading state
+    const uploadText = document.getElementById('avatarUploadText');
+    const preview = document.getElementById('avatarPreview');
+    uploadText.innerHTML = '<div class="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto"></div><p class="text-sm text-indigo-600 mt-2">Uploading...</p>';
+    
+    try {
+        // Upload to backend
+        const formData = new FormData();
+        formData.append('avatar_image', file);
+        
+        const response = await fetch('/api/upload-avatar-image', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Set the hidden input value
+            document.getElementById('avatarUrlInput').value = result.url;
+            
+            // Show preview
+            document.getElementById('avatarPreviewImg').src = result.url;
+            uploadText.classList.add('hidden');
+            preview.classList.remove('hidden');
+            
+            // Clear URL field (they used upload)
+            document.getElementById('avatarUrlField').value = '';
+        } else {
+            alert('Upload failed: ' + result.error);
+            uploadText.innerHTML = '<span class="text-sm text-gray-600">Click to upload avatar image</span>';
+        }
+    } catch (error) {
+        alert('Error uploading image: ' + error.message);
+        uploadText.innerHTML = '<span class="text-sm text-gray-600">Click to upload avatar image</span>';
+    }
+}
+
+function handleAvatarUrlInput(event) {
+    const url = event.target.value;
+    if (url) {
+        // Set the hidden input
+        document.getElementById('avatarUrlInput').value = url;
+        
+        // Show preview
+        document.getElementById('avatarPreviewImg').src = url;
+        document.getElementById('avatarUploadText').classList.add('hidden');
+        document.getElementById('avatarPreview').classList.remove('hidden');
+    }
+}
+</script>
+
+<!-- Add Channel Modal -->
+<div id="addChannelModal" class="hidden fixed inset-0 modal-backdrop z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto modal-content shadow-2xl">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">Add <span id="platformName">YouTube</span> Channel</h2>
+            <button onclick="closeAddChannelModal()" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+        
+        <!-- Basic Setup Form -->
+        <form id="addChannelForm" class="space-y-6">
+            <input type="hidden" id="channelPlatform" name="platform">
+            
+            <!-- Channel/Account URL -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <span id="urlLabel">Channel URL</span> *
+                </label>
+                <input type="url" name="channel_url" id="channelUrl" required
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                       placeholder="https://youtube.com/@channelname">
+            </div>
+            
+            <!-- Product Selection (ALL PLATFORMS) -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Product to Promote *</label>
+                <select name="product_id" required class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                    <option value="">Select Product</option>
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
+            
+            <!-- Avatar Image (TIKTOK & INSTAGRAM ONLY) -->
+            <div id="avatarField" class="hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Avatar Image (optional)</label>
+                
+                <!-- Hidden input for avatar URL (populated after upload) -->
+                <input type="hidden" name="avatar_url" id="avatarUrlInput">
+                
+                <!-- File Upload -->
+                <div class="flex items-center space-x-3">
+                    <label class="flex-1 cursor-pointer">
+                        <div class="px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-400 transition-colors text-center">
+                            <div id="avatarUploadText">
+                                <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                                <span class="text-sm text-gray-600">Click to upload avatar image</span>
+                                <p class="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</p>
+                            </div>
+                            <div id="avatarPreview" class="hidden">
+                                <img id="avatarPreviewImg" class="w-24 h-24 rounded-full mx-auto object-cover">
+                                <p class="text-xs text-green-600 mt-2">Image uploaded ✓</p>
+                            </div>
+                        </div>
+                        <input type="file" id="avatarFileInput" accept="image/png,image/jpeg,image/jpg" 
+                               onchange="handleAvatarUpload(event)" class="hidden">
+                    </label>
+                    
+                    <!-- OR separator -->
+                    <div class="text-sm text-gray-400">or</div>
+                    
+                    <!-- URL Input (alternative) -->
+                    <input type="url" id="avatarUrlField"
+                           class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                           placeholder="https://example.com/avatar.jpg"
+                           onchange="handleAvatarUrlInput(event)">
+                </div>
+                <p class="text-xs text-gray-500 mt-1">For UGC-style videos and reels</p>
+            </div>
+            
+            <!-- Videos Per Day (ALL PLATFORMS) -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Videos Per Day *</label>
+                <input type="number" name="videos_per_day" min="1" max="10" value="1" required 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                       oninput="updateVideosPerDayPreview(this.value)">
+                <p id="videosPerDayPreview" class="text-xs text-gray-500 mt-1">1 video per day (every 24.0 hours)</p>
+            </div>
+            
+            <!-- Daily Production Spend (ALL PLATFORMS) -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Daily Production Spend ($)</label>
+                <input type="number" name="daily_production_spend" min="0" step="0.01" value="0" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                       placeholder="0.00">
+                <p class="text-xs text-gray-500 mt-1">Production will stop when daily limit is reached (leave 0 for unlimited)</p>
+            </div>
+            
+            <!-- ========== YOUTUBE ONLY FIELDS ========== -->
+            <div id="youtubeFields" class="hidden space-y-6">
+                <!-- Video Duration -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Video Duration *</label>
+                    <input type="text" name="video_duration"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                           placeholder="30min, 1h, 8h30m, etc.">
+                    <p class="text-xs text-gray-500 mt-1">Examples: 30min, 1h, 8h30m</p>
+                </div>
+                
+                <!-- Voice Type -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Voice Type *</label>
+                    <select name="voice_type" id="voiceType" onchange="loadVoices()"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                        <option value="">Select Voice Type</option>
+                        <option value="elevenlabs">ElevenLabs (Premium)</option>
+                        <option value="kokoro">Kokoro (Free)</option>
+                    </select>
+                </div>
+                
+                <!-- Voice Selection -->
+                <div id="voiceSelectionDiv" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Voice *</label>
+                    <select name="voice_id" id="voiceSelect" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                        <option value="">Select Voice</option>
+                    </select>
+                </div>
+                
+                <!-- Group Assignment -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Project/Group *</label>
+                    <select name="group_id" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                        <option value="">Select Group</option>
+                        <!-- Populated with user groups -->
+                    </select>
+                </div>
+                
+                <!-- Content Style -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Content Style *</label>
+                    <select name="content_style_id" id="youtubeStyleSelect" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                        <option value="">Select Content Style</option>
+                        <!-- Populated with YouTube content styles -->
+                    </select>
+                </div>
+            </div>
+            
+            <!-- ========== TIKTOK ONLY FIELDS ========== -->
+            <div id="tiktokFields" class="hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Content Style *</label>
+                <select name="tiktok_content_style" id="tiktokStyleSelect" required class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                    <option value="">Select Content Style</option>
+                    <option value="ugc_video">UGC Product Video (Script-based)</option>
+                    <option value="product_showcase">Product Showcase (Images + Music)</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Short-form content optimized for TikTok</p>
+            </div>
+            
+            <!-- ========== INSTAGRAM ONLY FIELDS ========== -->
+            <div id="instagramFields" class="hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Content Type *</label>
+                <select name="instagram_post_type" id="instagramTypeSelect" required class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                    <option value="">Select Content Type</option>
+                    <option value="carousel">Carousel Post (Image Carousel)</option>
+                    <option value="reel">Reel (Short Video)</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Choose between static carousels or video reels</p>
+            </div>
+            
+            <div class="flex justify-end space-x-3 pt-6">
+                <button type="button" onclick="closeAddChannelModal()" 
+                        class="px-8 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold transition-all">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 font-semibold shadow-lg hover:shadow-xl transition-all">
+                    Add Channel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Quick Edit Modals -->
+<!-- Quick Edit Product Modal -->
+<div id="quickEditProductModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold mb-4">Change Product</h3>
+        <form id="quickEditProductForm" onsubmit="submitQuickEditProduct(event)">
+            <input type="hidden" id="qeProductChannelId">
+            <select id="qeProductSelect" class="w-full px-4 py-3 border border-gray-300 rounded-lg mb-4">
+                <option value="">Select Product</option>
+            </select>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeQuickEditProduct()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Quick Edit Frequency Modal -->
+<div id="quickEditFrequencyModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold mb-4">Set Videos Per Day</h3>
+        <form id="quickEditFrequencyForm" onsubmit="submitQuickEditFrequency(event)">
+            <input type="hidden" id="qeFrequencyChannelId">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Videos Per Day (1-10)</label>
+                <input type="number" id="qeVideosPerDay" min="1" max="10" value="1" 
+                       oninput="updateFrequencyPreview()"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                <p id="frequencyPreview" class="text-xs text-gray-500 mt-2">1 video per day (every 24.0 hours)</p>
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeQuickEditFrequency()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="quickEditSpendModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold mb-4">Set Daily Production Spend</h3>
+        <form id="quickEditSpendForm" onsubmit="submitQuickEditSpend(event)">
+            <input type="hidden" id="qeSpendChannelId">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Daily Budget ($)</label>
+                <input type="number" id="qeDailySpend" min="0" step="0.01" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                       placeholder="0.00">
+                <p class="text-xs text-gray-500 mt-2">Production will stop when daily limit is reached</p>
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeQuickEditSpend()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Quick Edit Voice Modal (YouTube only) -->
+<div id="quickEditVoiceModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold mb-4">Change Voice</h3>
+        <form id="quickEditVoiceForm" onsubmit="submitQuickEditVoice(event)">
+            <input type="hidden" id="qeVoiceChannelId">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Voice Type</label>
+                <select id="qeVoiceType" onchange="loadQuickEditVoices()" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                    <option value="elevenlabs">ElevenLabs</option>
+                    <option value="kokoro">Kokoro</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Voice</label>
+                <select id="qeVoiceId" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                    <option value="">Select Voice</option>
+                </select>
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeQuickEditVoice()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Quick Edit Avatar Modal (TikTok/Instagram only) -->
+<div id="quickEditAvatarModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold mb-4">Change Avatar</h3>
+        <form id="quickEditAvatarForm" onsubmit="submitQuickEditAvatar(event)">
+            <input type="hidden" id="qeAvatarChannelId">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Avatar Image URL</label>
+                <input type="url" id="qeAvatarUrl" class="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="https://example.com/avatar.jpg">
+                <p class="text-xs text-gray-500 mt-1">For UGC-style content</p>
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeQuickEditAvatar()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+

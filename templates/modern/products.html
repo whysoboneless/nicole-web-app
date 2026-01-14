@@ -1,0 +1,594 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Products - Nicole AI{% endblock %}
+{% block page_title %}Product Manager{% endblock %}
+{% block page_description %}Save and manage products for your campaigns{% endblock %}
+
+{% block extra_head %}
+<style>
+    .product-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid #6366f1;
+    }
+    .product-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .price-badge {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+    }
+    .cpa-badge {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Products</h1>
+            <p class="text-gray-600 mt-2">Manage products for your campaigns</p>
+        </div>
+        <button onclick="openCreateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Add Product
+        </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="text-sm text-gray-600">Total Products</div>
+            <div class="text-3xl font-bold text-gray-900 mt-2">{{ total_products }}</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="text-sm text-gray-600">With CPA Tracking</div>
+            <div class="text-3xl font-bold text-gray-900 mt-2">
+                {{ products|selectattr('cpa_network')|list|length }}
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="text-sm text-gray-600">Active Campaigns</div>
+            <div class="text-3xl font-bold text-gray-900 mt-2">-</div>
+        </div>
+    </div>
+
+    <!-- Products List -->
+    {% if products %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for product in products %}
+        <div class="product-card bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-start mb-4">
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ product.name }}</h3>
+                    {% if product.price %}
+                    <div class="price-badge inline-block mb-2">
+                        ${{ "%.2f"|format(product.price) }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="flex gap-2">
+                    {% if product.product_type == 'cpa_offer' %}
+                    <button onclick="testCPAAnalysis('{{ product._id }}')" class="text-blue-600 hover:text-blue-800" title="Test CPA Analysis">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                    </button>
+                    {% endif %}
+                    <button onclick="testUGC('{{ product._id }}')" class="text-purple-600 hover:text-purple-800" title="Test UGC Production">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </button>
+                    <button onclick="editProduct('{{ product._id }}')" class="text-indigo-600 hover:text-indigo-800">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </button>
+                    <button onclick="deleteProduct('{{ product._id }}', '{{ product.name }}')" class="text-red-600 hover:text-red-800">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            {% if product.description %}
+            <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ product.description }}</p>
+            {% endif %}
+            
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm text-gray-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                    </svg>
+                    <a href="{{ product.url }}" target="_blank" class="text-indigo-600 hover:underline truncate">{{ product.url }}</a>
+                </div>
+                
+                {% if product.cpa_network %}
+                <div class="flex items-center gap-2">
+                    <span class="cpa-badge">{{ product.cpa_network }}</span>
+                    {% if product.cpa_offer_id %}
+                    <span class="text-xs text-gray-500">Offer: {{ product.cpa_offer_id }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% if product.category %}
+                <div class="text-xs text-gray-500">Category: {{ product.category }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow p-12 text-center">
+        <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+        </svg>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">No products yet</h3>
+        <p class="text-gray-600 mb-6">Get started by adding your first product</p>
+        <button onclick="openCreateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold">
+            Add Product
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Create/Edit Modal -->
+<div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b">
+            <h2 class="text-2xl font-bold text-gray-900" id="modalTitle">Add Product</h2>
+        </div>
+        <form id="productForm" class="p-6 space-y-6">
+            <input type="hidden" id="productId" name="product_id">
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Product Type *</label>
+                <select id="productType" name="product_type" 
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+                        onchange="toggleProductType()">
+                    <option value="physical_product">Physical Product</option>
+                    <option value="cpa_offer">CPA Offer / Service</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Name *</label>
+                <input type="text" id="productName" name="name" required
+                       class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+                       placeholder="e.g., HealthLock, Uplevel Rewards">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">URL *</label>
+                <input type="url" id="productUrl" name="url" required
+                       class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+                       placeholder="https://example.com/product">
+                <p class="text-xs text-gray-500 mt-1">Product page or affiliate/offer link</p>
+            </div>
+            
+            <!-- CPA Offer Fields (show when CPA selected) -->
+            <div id="cpaOfferFields" class="hidden space-y-4 bg-orange-50 p-4 rounded-lg">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Conversion Action *</label>
+                    <select id="conversionAction" name="conversion_action"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300">
+                        <option value="signup">Sign Up</option>
+                        <option value="install">App Install</option>
+                        <option value="trial">Free Trial</option>
+                        <option value="purchase">Purchase</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">CPA Payout (USD)</label>
+                    <input type="number" id="cpaPayout" name="cpa_payout" step="0.01"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300"
+                           placeholder="e.g., 25.00">
+                    <p class="text-xs text-gray-500 mt-1">Expected payout per conversion</p>
+                </div>
+            </div>
+            
+            <!-- Product Image (show when Physical Product selected) -->
+            <div id="productImageField">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
+                
+                <!-- Hidden input for image URL (populated after upload) -->
+                <input type="hidden" name="image_url" id="productImageUrlInput">
+                
+                <!-- File Upload -->
+                <div class="flex items-center space-x-3">
+                    <label class="flex-1 cursor-pointer">
+                        <div class="px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-400 transition-colors text-center">
+                            <div id="productImageUploadText">
+                                <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                                <span class="text-sm text-gray-600">Click to upload product image</span>
+                                <p class="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</p>
+                            </div>
+                            <div id="productImagePreview" class="hidden">
+                                <img id="productImagePreviewImg" class="w-32 h-32 mx-auto object-cover rounded-lg">
+                                <p class="text-xs text-green-600 mt-2">Image uploaded ✓</p>
+                            </div>
+                        </div>
+                        <input type="file" id="productImageFileInput" accept="image/png,image/jpeg,image/jpg" 
+                               onchange="handleProductImageUpload(event)" class="hidden">
+                    </label>
+                    
+                    <!-- OR separator -->
+                    <div class="text-sm text-gray-400">or</div>
+                    
+                    <!-- URL Input (alternative) -->
+                    <input type="url" id="productImageUrlField"
+                           class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                           placeholder="https://example.com/image.jpg"
+                           onchange="handleProductImageUrlInput(event)">
+                </div>
+                <p class="text-xs text-gray-500 mt-1">For UGC video generation (image-to-video)</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Price (USD)</label>
+                    <input type="number" id="productPrice" name="price" step="0.01"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Price Text</label>
+                    <input type="text" id="productPriceText" name="price_text"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+                           placeholder="e.g., $24.99/month">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea id="productDescription" name="description" rows="3"
+                          class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"></textarea>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <input type="text" id="productCategory" name="category"
+                       class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+                       placeholder="e.g., Software, Health, Finance">
+            </div>
+            
+            <div class="border-t pt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">CPA Network Tracking (Optional)</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">CPA Network</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="cpaNetwork" name="cpa_network"
+                               class="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+                               placeholder="e.g., Glitchy, MaxBounty, CPAlead">
+                        <a href="/products/cpa-help" target="_blank" 
+                           class="px-3 py-3 bg-blue-100 hover:bg-blue-200 rounded-lg text-blue-700 font-medium transition-colors"
+                           title="CPA Network Setup Guide">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </a>
+                    </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">CPA Offer ID</label>
+                        <input type="text" id="cpaOfferId" name="cpa_offer_id"
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+                               placeholder="Offer ID from your CPA network">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tracking URL</label>
+                        <input type="url" id="trackingUrl" name="tracking_url"
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+                               placeholder="Your affiliate/tracking link">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-4 pt-4 border-t">
+                <button type="button" onclick="closeModal()" class="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit" class="px-6 py-3 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-semibold">
+                    Save Product
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let currentProductId = null;
+
+function toggleProductType() {
+    const productType = document.getElementById('productType').value;
+    const cpaFields = document.getElementById('cpaOfferFields');
+    const imageField = document.getElementById('productImageField');
+    
+    if (productType === 'cpa_offer') {
+        cpaFields.classList.remove('hidden');
+        imageField.classList.add('hidden');
+    } else {
+        cpaFields.classList.add('hidden');
+        imageField.classList.remove('hidden');
+    }
+}
+
+function openCreateModal() {
+    currentProductId = null;
+    document.getElementById('modalTitle').textContent = 'Add Product';
+    document.getElementById('productForm').reset();
+    document.getElementById('productId').value = '';
+    document.getElementById('productModal').classList.remove('hidden');
+    toggleProductType();  // Set initial state
+}
+
+function editProduct(productId) {
+    currentProductId = productId;
+    document.getElementById('modalTitle').textContent = 'Edit Product';
+    document.getElementById('productId').value = productId;
+    
+    // Fetch product data
+    fetch(`/products/${productId}/edit`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.product) {
+                document.getElementById('productName').value = data.product.name || '';
+                document.getElementById('productUrl').value = data.product.url || '';
+                document.getElementById('productPrice').value = data.product.price || '';
+                document.getElementById('productPriceText').value = data.product.price_text || '';
+                document.getElementById('productDescription').value = data.product.description || '';
+                document.getElementById('productCategory').value = data.product.category || '';
+                document.getElementById('cpaNetwork').value = data.product.cpa_network || '';
+                document.getElementById('cpaOfferId').value = data.product.cpa_offer_id || '';
+                document.getElementById('trackingUrl').value = data.product.tracking_url || '';
+            }
+            document.getElementById('productModal').classList.remove('hidden');
+        })
+        .catch(err => {
+            console.error('Error loading product:', err);
+            alert('Error loading product');
+        });
+}
+
+function closeModal() {
+    document.getElementById('productModal').classList.add('hidden');
+    currentProductId = null;
+}
+
+async function testCPAAnalysis(productId) {
+    const button = event.target.closest('button');
+    const originalHTML = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+    
+    try {
+        const response = await fetch('/campaigns/test-cpa-analysis', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ product_id: productId })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            const analysis = result.analysis;
+            const message = `✅ CPA Analysis Results:\n\n` +
+                `What They Offer: ${result.what_they_offer}\n` +
+                `Offer Type: ${result.offer_type}\n` +
+                `Conversion Action: ${result.conversion_action}\n` +
+                `Target Audience: ${result.target_audience}\n` +
+                `Benefits: ${result.benefits.join(', ')}\n\n` +
+                `Check console for full analysis.`;
+            alert(message);
+            console.log('Full Analysis:', analysis);
+        } else {
+            alert('❌ Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalHTML;
+    }
+}
+
+async function testUGC(productId) {
+    if (!confirm('Test UGC production for this product? This will take 2-3 minutes and use API credits.')) {
+        return;
+    }
+    
+    const button = event.target.closest('button');
+    const originalHTML = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+    
+    try {
+        const response = await fetch('/campaigns/test-ugc-production', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                product_id: productId,
+                avatar_url: 'https://i.pravatar.cc/300'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ UGC Video Generated!\n\nOpening Google Drive link...');
+            window.open(result.video_url, '_blank');
+            console.log('Script:', result.script);
+            console.log('Persona:', result.persona);
+        } else {
+            alert('❌ Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalHTML;
+    }
+}
+
+function deleteProduct(productId, productName) {
+    if (!confirm(`Are you sure you want to delete "${productName}"?`)) {
+        return;
+    }
+    
+    fetch(`/products/${productId}/delete`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.error || 'Failed to delete product');
+        }
+    })
+    .catch(err => {
+        console.error('Error deleting product:', err);
+        alert('Error deleting product');
+    });
+}
+
+document.getElementById('productForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    
+    // Convert price to float
+    if (data.price) {
+        data.price = parseFloat(data.price);
+    }
+    
+    const url = currentProductId 
+        ? `/products/${currentProductId}/edit`
+        : '/products/create';
+    
+    const method = currentProductId ? 'POST' : 'POST';
+    
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            if (result.redirect) {
+                window.location.href = result.redirect;
+            } else {
+                location.reload();
+            }
+        } else {
+            alert(result.error || 'Failed to save product');
+        }
+    } catch (error) {
+        console.error('Error saving product:', error);
+        alert('Error saving product');
+    }
+});
+
+// Close modal on outside click
+document.getElementById('productModal').addEventListener('click', (e) => {
+    if (e.target.id === 'productModal') {
+        closeModal();
+    }
+});
+
+// Product Image Upload Functions
+async function handleProductImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Validate file
+    if (!file.type.match('image/(png|jpeg|jpg)')) {
+        alert('Please upload a PNG or JPG image');
+        return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+        alert('Image must be under 10MB');
+        return;
+    }
+    
+    // Show loading state
+    const uploadText = document.getElementById('productImageUploadText');
+    const preview = document.getElementById('productImagePreview');
+    uploadText.innerHTML = '<div class="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto"></div><p class="text-sm text-indigo-600 mt-2">Uploading...</p>';
+    
+    try {
+        // Upload to backend (same endpoint as avatar)
+        const formData = new FormData();
+        formData.append('avatar_image', file);  // Using same field name as avatar endpoint
+        
+        const response = await fetch('/campaigns/api/upload-avatar-image', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Set the hidden input value
+            document.getElementById('productImageUrlInput').value = result.url;
+            
+            // Show preview
+            document.getElementById('productImagePreviewImg').src = result.url;
+            uploadText.classList.add('hidden');
+            preview.classList.remove('hidden');
+            
+            // Clear URL field (they used upload)
+            document.getElementById('productImageUrlField').value = '';
+        } else {
+            alert('Upload failed: ' + result.error);
+            uploadText.innerHTML = '<svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg><span class="text-sm text-gray-600">Click to upload product image</span>';
+        }
+    } catch (error) {
+        alert('Error uploading image: ' + error.message);
+        uploadText.innerHTML = '<svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg><span class="text-sm text-gray-600">Click to upload product image</span>';
+    }
+}
+
+function handleProductImageUrlInput(event) {
+    const url = event.target.value;
+    if (url) {
+        // Set the hidden input
+        document.getElementById('productImageUrlInput').value = url;
+        
+        // Show preview
+        document.getElementById('productImagePreviewImg').src = url;
+        document.getElementById('productImageUploadText').classList.add('hidden');
+        document.getElementById('productImagePreview').classList.remove('hidden');
+    }
+}
+</script>
+{% endblock %}
+

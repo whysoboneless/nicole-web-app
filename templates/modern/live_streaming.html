@@ -1,0 +1,532 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Live Streaming - Nicole AI{% endblock %}
+
+{% block page_title %}Live Streaming{% endblock %}
+{% block page_description %}Set up and manage automated live streams for your YouTube channels{% endblock %}
+
+{% block content %}
+<div x-data="liveStreamingPage()">
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass-effect rounded-xl p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Active Streams</p>
+                    <p class="text-2xl font-bold text-green-600" x-text="activeStreams">2</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-xl">📡</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Total Watch Time</p>
+                    <p class="text-2xl font-bold text-blue-600" x-text="totalWatchTime">1,247h</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-xl">⏱️</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Total Viewers</p>
+                    <p class="text-2xl font-bold text-purple-600" x-text="totalViewers">23.4K</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-xl">👥</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Revenue Generated</p>
+                    <p class="text-2xl font-bold text-green-600" x-text="'$' + revenueGenerated">$3,892</p>
+                </div>
+                <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-xl">💰</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stream Setup -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Stream Configuration -->
+        <div class="lg:col-span-2">
+            <div class="glass-effect rounded-xl p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-6">🚀 Quick Stream Setup</h3>
+                
+                <!-- Channel Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Channel</label>
+                    <select x-model="selectedChannel" @change="loadChannelSettings()" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">Choose a channel...</option>
+                        <template x-for="channel in channels" :key="channel.id">
+                            <option :value="channel.id" x-text="channel.name"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <!-- Stream Settings -->
+                <div x-show="selectedChannel" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Stream Key</label>
+                            <div class="relative">
+                                <input :type="showStreamKey ? 'text' : 'password'" x-model="streamSettings.streamKey" 
+                                       placeholder="Enter YouTube stream key"
+                                       class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <button @click="showStreamKey = !showStreamKey" type="button"
+                                        class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <span x-text="showStreamKey ? '🙈' : '👁️'"></span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">RTMP URL</label>
+                            <input type="url" x-model="streamSettings.rtmpUrl" 
+                                   placeholder="rtmp://a.rtmp.youtube.com/live2"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Stream Quality</label>
+                            <select x-model="streamSettings.quality" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="720p">720p (Recommended)</option>
+                                <option value="1080p">1080p (Higher bandwidth)</option>
+                                <option value="480p">480p (Lower bandwidth)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Stream Duration</label>
+                            <select x-model="streamSettings.duration" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="1h">1 Hour</option>
+                                <option value="2h">2 Hours</option>
+                                <option value="4h">4 Hours</option>
+                                <option value="8h">8 Hours</option>
+                                <option value="continuous">Continuous</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stream Status -->
+        <div class="lg:col-span-1">
+            <div class="glass-effect rounded-xl p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">📊 Stream Status</h3>
+                
+                <div x-show="!currentStream.active" class="text-center py-8">
+                    <div class="text-4xl mb-2">⚫</div>
+                    <p class="text-gray-600">No active stream</p>
+                </div>
+                
+                <div x-show="currentStream.active" class="space-y-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                        <span class="text-sm font-medium text-red-600">LIVE</span>
+                    </div>
+                    
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Duration:</span>
+                            <span class="font-medium" x-text="currentStream.duration">2h 34m</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Viewers:</span>
+                            <span class="font-medium" x-text="currentStream.viewers">47</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Chat messages:</span>
+                            <span class="font-medium" x-text="currentStream.chatMessages">892</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Revenue:</span>
+                            <span class="font-medium text-green-600" x-text="'$' + currentStream.revenue">$23.45</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Sources -->
+    <div class="glass-effect rounded-xl p-6 mb-8">
+        <h3 class="text-lg font-bold text-gray-900 mb-6">📺 Content Sources</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Video Library -->
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6">
+                <div class="text-center">
+                    <div class="text-3xl mb-3">🎬</div>
+                    <h4 class="font-semibold text-blue-900 mb-2">Video Library</h4>
+                    <p class="text-sm text-blue-700 mb-4">Stream from your uploaded video collection</p>
+                    <button @click="showVideoLibrary = true" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        Browse Library
+                    </button>
+                </div>
+            </div>
+            
+            <!-- AI Generated -->
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6">
+                <div class="text-center">
+                    <div class="text-3xl mb-3">🤖</div>
+                    <h4 class="font-semibold text-purple-900 mb-2">AI Generated</h4>
+                    <p class="text-sm text-purple-700 mb-4">Create real-time AI content for streaming</p>
+                    <button @click="setupAIStream()" 
+                            class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                        Setup AI Stream
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Content Scraping -->
+            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6">
+                <div class="text-center">
+                    <div class="text-3xl mb-3">🌐</div>
+                    <h4 class="font-semibold text-green-900 mb-2">Content Scraping</h4>
+                    <p class="text-sm text-green-700 mb-4">Auto-scrape and stream online content</p>
+                    <button @click="showContentScraper = true" 
+                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        Setup Scraper
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stream Controls -->
+    <div class="glass-effect rounded-xl p-6 mb-8">
+        <div class="flex items-center justify-between">
+            <h3 class="text-lg font-bold text-gray-900">🎛️ Stream Controls</h3>
+            <div class="flex items-center space-x-3">
+                <span class="text-sm text-gray-600">Server Status:</span>
+                <div class="flex items-center space-x-1">
+                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span class="text-sm font-medium text-green-600">Online</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+            <button @click="startStream()" 
+                    :disabled="!selectedChannel || !streamSettings.streamKey || currentStream.active"
+                    :class="(!selectedChannel || !streamSettings.streamKey || currentStream.active) ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'"
+                    class="flex items-center justify-center space-x-2 py-3 px-4 text-white rounded-lg transition-colors">
+                <span class="text-xl">▶️</span>
+                <span class="font-medium">Start Stream</span>
+            </button>
+            
+            <button @click="stopStream()" 
+                    :disabled="!currentStream.active"
+                    :class="!currentStream.active ? 'bg-gray-300 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'"
+                    class="flex items-center justify-center space-x-2 py-3 px-4 text-white rounded-lg transition-colors">
+                <span class="text-xl">⏹️</span>
+                <span class="font-medium">Stop Stream</span>
+            </button>
+            
+            <button @click="pauseStream()" 
+                    :disabled="!currentStream.active"
+                    :class="!currentStream.active ? 'bg-gray-300 cursor-not-allowed' : 'bg-yellow-600 hover:bg-yellow-700'"
+                    class="flex items-center justify-center space-x-2 py-3 px-4 text-white rounded-lg transition-colors">
+                <span class="text-xl">⏸️</span>
+                <span class="font-medium">Pause Stream</span>
+            </button>
+            
+            <button @click="showStreamAnalytics = true" 
+                    class="flex items-center justify-center space-x-2 py-3 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <span class="text-xl">📊</span>
+                <span class="font-medium">Analytics</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Active Streams -->
+    <div class="glass-effect rounded-xl p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-6">📡 Active Streams</h3>
+        
+        <div x-show="activeStreamsList.length === 0" class="text-center py-8">
+            <div class="text-4xl mb-4">📺</div>
+            <h4 class="text-lg font-semibold text-gray-900 mb-2">No active streams</h4>
+            <p class="text-gray-600">Start your first live stream to see it here</p>
+        </div>
+        
+        <div x-show="activeStreamsList.length > 0" class="space-y-4">
+            <template x-for="stream in activeStreamsList" :key="stream.id">
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-shrink-0">
+                                <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900" x-text="stream.channelName"></h4>
+                                <p class="text-sm text-gray-600">
+                                    <span x-text="stream.duration"></span> • 
+                                    <span x-text="stream.viewers + ' viewers'"></span> •
+                                    <span x-text="stream.source"></span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button @click="viewStream(stream)" 
+                                    class="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200 transition-colors text-sm">
+                                View
+                            </button>
+                            <button @click="stopSpecificStream(stream)" 
+                                    class="bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200 transition-colors text-sm">
+                                Stop
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Content Scraper Modal -->
+    <div x-show="showContentScraper" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-2xl w-full mx-4">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">🌐 Content Scraping Setup</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Content Source</label>
+                    <select x-model="scraper.source" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        <option value="reddit">Reddit Posts</option>
+                        <option value="twitter">Twitter/X Feed</option>
+                        <option value="news">News Articles</option>
+                        <option value="youtube">YouTube Comments</option>
+                        <option value="tiktok">TikTok Trends</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search Terms/Keywords</label>
+                    <input type="text" x-model="scraper.keywords" 
+                           placeholder="crypto, bitcoin, trading"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Content Format</label>
+                    <select x-model="scraper.format" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        <option value="text-to-speech">Text-to-Speech</option>
+                        <option value="ai-avatar">AI Avatar Reading</option>
+                        <option value="slideshow">Slideshow with TTS</option>
+                        <option value="compilation">Content Compilation</option>
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Scrape Interval</label>
+                        <select x-model="scraper.interval" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="5m">Every 5 minutes</option>
+                            <option value="15m">Every 15 minutes</option>
+                            <option value="30m">Every 30 minutes</option>
+                            <option value="1h">Every hour</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Content Filter</label>
+                        <select x-model="scraper.filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="trending">Trending Only</option>
+                            <option value="recent">Most Recent</option>
+                            <option value="popular">Most Popular</option>
+                            <option value="all">All Content</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-yellow-900 mb-2">⚠️ Important Notes</h4>
+                    <ul class="text-sm text-yellow-800 space-y-1">
+                        <li>• Ensure content complies with YouTube's Community Guidelines</li>
+                        <li>• Add proper attribution for scraped content</li>
+                        <li>• Monitor for copyright issues</li>
+                        <li>• Use fair use principles</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-6">
+                <button @click="showContentScraper = false" 
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                    Cancel
+                </button>
+                <button @click="startContentScraping()" 
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    Start Scraping
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function liveStreamingPage() {
+    return {
+        // Stats
+        activeStreams: 2,
+        totalWatchTime: '1,247h',
+        totalViewers: '23.4K',
+        revenueGenerated: 3892,
+        
+        // Channel data
+        selectedChannel: '',
+        channels: [
+            { id: 'ch1', name: 'CryptoMaster Daily' },
+            { id: 'ch2', name: 'AI Tools Review' },
+            { id: 'ch3', name: 'Finance Genius' },
+            { id: 'ch4', name: 'Mindset Mastery' }
+        ],
+        
+        // Stream settings
+        streamSettings: {
+            streamKey: '',
+            rtmpUrl: 'rtmp://a.rtmp.youtube.com/live2',
+            quality: '720p',
+            duration: '2h'
+        },
+        showStreamKey: false,
+        
+        // Current stream status
+        currentStream: {
+            active: false,
+            duration: '2h 34m',
+            viewers: 47,
+            chatMessages: 892,
+            revenue: 23.45
+        },
+        
+        // Active streams list
+        activeStreamsList: [
+            {
+                id: 'stream1',
+                channelName: 'CryptoMaster Daily',
+                duration: '2h 34m',
+                viewers: 47,
+                source: 'AI Generated'
+            },
+            {
+                id: 'stream2', 
+                channelName: 'AI Tools Review',
+                duration: '1h 12m',
+                viewers: 23,
+                source: 'Content Scraping'
+            }
+        ],
+        
+        // Modals
+        showVideoLibrary: false,
+        showContentScraper: false,
+        showStreamAnalytics: false,
+        
+        // Content scraper settings
+        scraper: {
+            source: 'reddit',
+            keywords: '',
+            format: 'text-to-speech',
+            interval: '15m',
+            filter: 'trending'
+        },
+        
+        // Methods
+        loadChannelSettings() {
+            // Simulate loading saved settings for selected channel
+            if (this.selectedChannel) {
+                console.log('Loading settings for channel:', this.selectedChannel);
+                // In real implementation, this would load from backend
+            }
+        },
+        
+        startStream() {
+            if (!this.selectedChannel || !this.streamSettings.streamKey) {
+                alert('Please select a channel and enter stream key');
+                return;
+            }
+            
+            this.currentStream.active = true;
+            alert('🚀 Stream started successfully!');
+            
+            // Simulate stream data updates
+            this.simulateStreamUpdates();
+        },
+        
+        stopStream() {
+            this.currentStream.active = false;
+            alert('⏹️ Stream stopped');
+        },
+        
+        pauseStream() {
+            alert('⏸️ Stream paused');
+        },
+        
+        setupAIStream() {
+            alert('Setting up AI-generated content stream...');
+        },
+        
+        startContentScraping() {
+            if (!this.scraper.keywords) {
+                alert('Please enter search keywords');
+                return;
+            }
+            
+            alert(`🌐 Started scraping ${this.scraper.source} for "${this.scraper.keywords}"`);
+            this.showContentScraper = false;
+            
+            // Reset form
+            this.scraper = {
+                source: 'reddit',
+                keywords: '',
+                format: 'text-to-speech',
+                interval: '15m',
+                filter: 'trending'
+            };
+        },
+        
+        viewStream(stream) {
+            alert(`Viewing stream: ${stream.channelName}`);
+        },
+        
+        stopSpecificStream(stream) {
+            this.activeStreamsList = this.activeStreamsList.filter(s => s.id !== stream.id);
+            alert(`Stopped stream: ${stream.channelName}`);
+        },
+        
+        simulateStreamUpdates() {
+            if (this.currentStream.active) {
+                // Simulate real-time updates
+                setInterval(() => {
+                    if (this.currentStream.active) {
+                        this.currentStream.viewers += Math.floor(Math.random() * 3) - 1;
+                        this.currentStream.chatMessages += Math.floor(Math.random() * 5);
+                        this.currentStream.revenue += Math.random() * 0.5;
+                    }
+                }, 5000);
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

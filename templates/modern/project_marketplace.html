@@ -1,0 +1,390 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Project Marketplace - Nicole AI{% endblock %}
+
+{% block page_title %}Project Marketplace{% endblock %}
+{% block page_description %}Browse and purchase proven YouTube automation projects and competitor analysis{% endblock %}
+
+{% block content %}
+<div x-data="marketplacePage()">
+    <!-- Hero Section -->
+    <div class="glass-effect rounded-xl p-8 mb-8 text-center">
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">🏪 Project Marketplace</h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-6">
+            Buy proven YouTube automation projects with competitor analysis, series breakdowns, and optimization data
+        </p>
+        <div class="flex items-center justify-center space-x-6 text-sm text-gray-600">
+            <div class="flex items-center space-x-2">
+                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                <span>Verified Profitable</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                <span>Ready to Deploy</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="w-2 h-2 bg-purple-500 rounded-full"></span>
+                <span>Full Data Included</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="glass-effect rounded-xl p-6 mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex flex-wrap gap-3">
+                <select x-model="filters.category" @change="filterProjects()" 
+                        class="px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="">All Categories</option>
+                    <option value="finance">💰 Finance & Crypto</option>
+                    <option value="ai-tools">🤖 AI & Technology</option>
+                    <option value="self-improvement">📈 Self Improvement</option>
+                    <option value="entertainment">🎮 Entertainment</option>
+                    <option value="education">🎓 Education</option>
+                    <option value="true-crime">🔍 True Crime</option>
+                </select>
+                
+                <select x-model="filters.priceRange" @change="filterProjects()" 
+                        class="px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="">All Prices</option>
+                    <option value="0-100">$0 - $100</option>
+                    <option value="100-500">$100 - $500</option>
+                    <option value="500-1000">$500 - $1,000</option>
+                    <option value="1000+">$1,000+</option>
+                </select>
+                
+                <select x-model="filters.performance" @change="filterProjects()" 
+                        class="px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="">All Performance</option>
+                    <option value="high">High RPM ($15+)</option>
+                    <option value="medium">Medium RPM ($8-15)</option>
+                    <option value="low">Low RPM ($3-8)</option>
+                </select>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <div class="relative">
+                    <input type="text" x-model="searchQuery" @input="filterProjects()" 
+                           placeholder="Search projects..."
+                           class="pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
+                        <span class="text-gray-400">🔍</span>
+                    </div>
+                </div>
+                <select x-model="sortBy" @change="filterProjects()" 
+                        class="px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="featured">Featured</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="revenue">Revenue Potential</option>
+                    <option value="recent">Most Recent</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Projects -->
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">⭐ Featured Projects</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <template x-for="project in featuredProjects" :key="project.id">
+                <div class="glass-effect rounded-xl overflow-hidden card-hover relative">
+                    <div class="absolute top-3 left-3 z-10">
+                        <span class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                            ⭐ FEATURED
+                        </span>
+                    </div>
+                    
+                    <div class="aspect-video bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                        <div class="text-center text-white">
+                            <div class="text-4xl mb-2" x-text="project.icon"></div>
+                            <h4 class="font-bold text-lg" x-text="project.title"></h4>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <span :class="getCategoryColor(project.category)" 
+                                  class="px-3 py-1 rounded-full text-xs font-medium" x-text="project.category"></span>
+                            <div class="flex items-center space-x-1">
+                                <span class="text-yellow-400">⭐</span>
+                                <span class="text-sm font-medium" x-text="project.rating"></span>
+                                <span class="text-xs text-gray-500" x-text="'(' + project.reviews + ')'"></span>
+                            </div>
+                        </div>
+                        
+                        <p class="text-gray-600 text-sm mb-4" x-text="project.description"></p>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+                            <div>
+                                <span class="text-gray-600">Est. Monthly Revenue:</span>
+                                <div class="font-semibold text-green-600" x-text="project.monthlyRevenue"></div>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Competitor Count:</span>
+                                <div class="font-semibold text-blue-600" x-text="project.competitorCount"></div>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Series/Themes:</span>
+                                <div class="font-semibold text-purple-600" x-text="project.seriesCount"></div>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Avg. RPM:</span>
+                                <div class="font-semibold text-orange-600" x-text="project.avgRPM"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-2xl font-bold text-gray-900" x-text="project.price"></span>
+                                <span class="text-sm text-gray-500 line-through" x-text="project.originalPrice"></span>
+                            </div>
+                            <button @click="viewProject(project)" 
+                                    class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- All Projects -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-gray-900">🎯 All Projects</h3>
+            <span class="text-sm text-gray-600" x-text="filteredProjects.length + ' projects found'"></span>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <template x-for="project in filteredProjects" :key="project.id">
+                <div class="glass-effect rounded-xl overflow-hidden card-hover">
+                    <div class="aspect-video bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
+                        <div class="text-center text-white">
+                            <div class="text-4xl mb-2" x-text="project.icon"></div>
+                            <h4 class="font-bold" x-text="project.title"></h4>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <span :class="getCategoryColor(project.category)" 
+                                  class="px-3 py-1 rounded-full text-xs font-medium" x-text="project.category"></span>
+                            <div class="flex items-center space-x-1">
+                                <span class="text-yellow-400">⭐</span>
+                                <span class="text-sm font-medium" x-text="project.rating"></span>
+                            </div>
+                        </div>
+                        
+                        <p class="text-gray-600 text-sm mb-4" x-text="project.description"></p>
+                        
+                        <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+                            <div class="text-center bg-green-50 p-2 rounded">
+                                <div class="font-semibold text-green-600" x-text="project.monthlyRevenue"></div>
+                                <div class="text-gray-600">Monthly Rev</div>
+                            </div>
+                            <div class="text-center bg-blue-50 p-2 rounded">
+                                <div class="font-semibold text-blue-600" x-text="project.competitorCount"></div>
+                                <div class="text-gray-600">Competitors</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-xl font-bold text-gray-900" x-text="project.price"></span>
+                            </div>
+                            <button @click="viewProject(project)" 
+                                    class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                                View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Why Buy from Marketplace -->
+    <div class="glass-effect rounded-xl p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-6">💡 Why Buy from Our Marketplace?</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center">
+                <div class="text-3xl mb-3">🎯</div>
+                <h4 class="font-semibold text-gray-900 mb-2">Proven Profitable</h4>
+                <p class="text-sm text-gray-600">All projects are verified to be generating revenue with real data to back it up</p>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl mb-3">⚡</div>
+                <h4 class="font-semibold text-gray-900 mb-2">Ready to Launch</h4>
+                <p class="text-sm text-gray-600">Complete competitor analysis, series breakdowns, and optimization guidelines included</p>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl mb-3">🔄</div>
+                <h4 class="font-semibold text-gray-900 mb-2">Continuous Updates</h4>
+                <p class="text-sm text-gray-600">Regular updates with new competitors, trending series, and performance optimizations</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function marketplacePage() {
+    return {
+        searchQuery: '',
+        sortBy: 'featured',
+        filters: {
+            category: '',
+            priceRange: '',
+            performance: ''
+        },
+        
+        featuredProjects: [
+            {
+                id: 'featured1',
+                title: 'Crypto Daily News Empire',
+                category: 'Finance & Crypto',
+                description: 'Complete crypto news automation with 15 high-performing competitors analyzed',
+                icon: '₿',
+                monthlyRevenue: '$8,500',
+                competitorCount: 15,
+                seriesCount: 8,
+                avgRPM: '$12.50',
+                price: '$297',
+                originalPrice: '$497',
+                rating: 4.9,
+                reviews: 47
+            },
+            {
+                id: 'featured2',
+                title: 'AI Tools Review Machine',
+                category: 'AI & Technology',
+                description: 'AI tools review channel with proven $15+ RPM and growing competitor base',
+                icon: '🤖',
+                monthlyRevenue: '$6,200',
+                competitorCount: 23,
+                seriesCount: 12,
+                avgRPM: '$15.20',
+                price: '$397',
+                originalPrice: '$597',
+                rating: 4.8,
+                reviews: 32
+            },
+            {
+                id: 'featured3',
+                title: 'True Crime Stories Hub',
+                category: 'True Crime',
+                description: 'High-engagement true crime content with excellent retention optimization data',
+                icon: '🔍',
+                monthlyRevenue: '$12,100',
+                competitorCount: 9,
+                seriesCount: 6,
+                avgRPM: '$18.90',
+                price: '$597',
+                originalPrice: '$897',
+                rating: 4.9,
+                reviews: 63
+            }
+        ],
+        
+        allProjects: [
+            {
+                id: 'proj1',
+                title: 'Self Improvement Daily',
+                category: 'Self Improvement',
+                description: 'Personal development content with high retention rates',
+                icon: '📈',
+                monthlyRevenue: '$4,200',
+                competitorCount: 18,
+                price: '$197',
+                rating: 4.6
+            },
+            {
+                id: 'proj2',
+                title: 'Gaming News Central',
+                category: 'Entertainment',
+                description: 'Gaming industry news and reviews automation',
+                icon: '🎮',
+                monthlyRevenue: '$3,800',
+                competitorCount: 12,
+                price: '$147',
+                rating: 4.4
+            },
+            {
+                id: 'proj3',
+                title: 'Finance Simplified',
+                category: 'Finance & Crypto',
+                description: 'Personal finance education with proven engagement',
+                icon: '💰',
+                monthlyRevenue: '$5,600',
+                competitorCount: 21,
+                price: '$247',
+                rating: 4.7
+            },
+            {
+                id: 'proj4',
+                title: 'Tech Tutorial Empire',
+                category: 'Education',
+                description: 'Technology tutorials and how-to guides',
+                icon: '🎓',
+                monthlyRevenue: '$2,900',
+                competitorCount: 14,
+                price: '$127',
+                rating: 4.3
+            }
+        ],
+        
+        get filteredProjects() {
+            let projects = [...this.allProjects];
+            
+            // Filter by search query
+            if (this.searchQuery) {
+                projects = projects.filter(p => 
+                    p.title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                    p.description.toLowerCase().includes(this.searchQuery.toLowerCase())
+                );
+            }
+            
+            // Filter by category
+            if (this.filters.category) {
+                projects = projects.filter(p => 
+                    p.category.toLowerCase().replace(' & ', '-').replace(' ', '-') === this.filters.category
+                );
+            }
+            
+            // Sort projects
+            if (this.sortBy === 'price-low') {
+                projects.sort((a, b) => parseInt(a.price.replace('$', '')) - parseInt(b.price.replace('$', '')));
+            } else if (this.sortBy === 'price-high') {
+                projects.sort((a, b) => parseInt(b.price.replace('$', '')) - parseInt(a.price.replace('$', '')));
+            } else if (this.sortBy === 'revenue') {
+                projects.sort((a, b) => parseInt(b.monthlyRevenue.replace(/[$,]/g, '')) - parseInt(a.monthlyRevenue.replace(/[$,]/g, '')));
+            }
+            
+            return projects;
+        },
+        
+        getCategoryColor(category) {
+            const colors = {
+                'Finance & Crypto': 'bg-green-100 text-green-700',
+                'AI & Technology': 'bg-blue-100 text-blue-700',
+                'Self Improvement': 'bg-purple-100 text-purple-700',
+                'Entertainment': 'bg-pink-100 text-pink-700',
+                'Education': 'bg-yellow-100 text-yellow-700',
+                'True Crime': 'bg-red-100 text-red-700'
+            };
+            return colors[category] || 'bg-gray-100 text-gray-700';
+        },
+        
+        filterProjects() {
+            // Trigger reactivity
+            console.log('Filtering projects...');
+        },
+        
+        viewProject(project) {
+            alert(`Viewing project: ${project.title}\n\nThis would open a detailed view with:\n• Complete competitor analysis\n• Series breakdowns\n• Optimization guidelines\n• Revenue projections\n• Purchase options`);
+        }
+    }
+}
+</script>
+{% endblock %}

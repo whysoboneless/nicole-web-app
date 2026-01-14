@@ -1,0 +1,46 @@
+# Nicole Web Suite - Systemd Service
+# This file will be copied to /etc/systemd/system/nicole.service
+
+[Unit]
+Description=Nicole Web Suite Flask Application
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=APP_DIR_PLACEHOLDER
+
+# Environment
+Environment="PATH=APP_DIR_PLACEHOLDER/venv/bin:/usr/local/bin:/usr/bin"
+EnvironmentFile=APP_DIR_PLACEHOLDER/.env
+
+# Run gunicorn with 4 workers
+ExecStart=APP_DIR_PLACEHOLDER/venv/bin/gunicorn \
+    --workers 4 \
+    --threads 2 \
+    --worker-class gthread \
+    --bind 127.0.0.1:5000 \
+    --timeout 300 \
+    --keep-alive 5 \
+    --max-requests 1000 \
+    --max-requests-jitter 50 \
+    --access-logfile APP_DIR_PLACEHOLDER/logs/access.log \
+    --error-logfile APP_DIR_PLACEHOLDER/logs/error.log \
+    --capture-output \
+    "app:create_app()"
+
+# Restart policy
+Restart=always
+RestartSec=5
+
+# Resource limits
+LimitNOFILE=65535
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

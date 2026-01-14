@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thumbnail Studio - Nicole AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-effect { 
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .gradient-border { background: linear-gradient(45deg, #667eea, #764ba2, #f093fb); padding: 2px; border-radius: 12px; }
+        .gradient-border-inner { background: white; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50" x-data="thumbnailStudio()">
+    <!-- Navigation Bar -->
+    <nav class="glass-effect sticky top-0 z-50 border-b border-white/20">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <a href="/dashboard" class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">N</span>
+                        </div>
+                        <span class="font-bold text-gray-900">Nicole AI</span>
+                    </a>
+                    <span class="text-gray-400">•</span>
+                    <span class="text-gray-600">Thumbnail Studio</span>
+                </div>
+                <a href="/dashboard" class="text-gray-600 hover:text-gray-900 transition-colors">← Back to Empire</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-black text-gray-900 mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                🎨 Thumbnail Studio
+            </h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Create thumbnails with pixel-perfect competitor consistency using AI-trained models and character persistence
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Model Training Panel -->
+            <div class="lg:col-span-1">
+                <div class="glass-effect rounded-xl p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">🧠 AI Model Training</h2>
+                    
+                    <!-- Project Selection -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Project</label>
+                        <select x-model="selectedProject" @change="loadSeries()" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Select project...</option>
+                            {% for project in projects %}
+                            <option value="{{ project._id }}">{{ project.name or "Unnamed Project" }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Series & Theme -->
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Series</label>
+                            <select x-model="selectedSeries" @change="loadThemes()"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Series...</option>
+                                <option value="crypto-60-sec">Crypto 60 Sec</option>
+                                <option value="stock-picks">Stock Picks</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Theme</label>
+                            <select x-model="selectedTheme"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Theme...</option>
+                                <option value="bitcoin-analysis">Bitcoin Analysis</option>
+                                <option value="market-predictions">Market Predictions</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Current Model Status -->
+                    <div class="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-medium text-gray-900">Current Model</h3>
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Active</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">Finance-Pro-v3</p>
+                        <p class="text-xs text-gray-500">Trained on 47 competitor thumbnails</p>
+                        <div class="mt-3 flex space-x-2">
+                            <button class="flex-1 bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700">🎯 Fine-tune</button>
+                            <button class="flex-1 bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">🧪 Test</button>
+                        </div>
+                    </div>
+
+                    <!-- Character Consistency -->
+                    <div class="mb-6">
+                        <h3 class="font-medium text-gray-900 mb-3">👤 Character Consistency</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                                    <span class="text-gray-500">👤</span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-gray-900">Financial Expert</p>
+                                    <p class="text-xs text-gray-600">Professional male, consistent across videos</p>
+                                </div>
+                                <button class="text-indigo-600 hover:text-indigo-700 text-xs">Edit</button>
+                            </div>
+                        </div>
+                        <button class="w-full mt-3 border border-dashed border-gray-300 rounded-lg py-2 text-sm text-gray-600 hover:border-indigo-300 hover:text-indigo-600">
+                            + Add Character
+                        </button>
+                    </div>
+
+                    <!-- LoRA Styles -->
+                    <div>
+                        <h3 class="font-medium text-gray-900 mb-3">🎨 LoRA Styles</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button class="p-2 border rounded-lg text-xs hover:bg-gray-50" 
+                                    :class="selectedStyle === 'professional' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'"
+                                    @click="selectedStyle = 'professional'">
+                                💼 Professional
+                            </button>
+                            <button class="p-2 border rounded-lg text-xs hover:bg-gray-50"
+                                    :class="selectedStyle === 'clickbait' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'"
+                                    @click="selectedStyle = 'clickbait'">
+                                🔥 Clickbait
+                            </button>
+                            <button class="p-2 border rounded-lg text-xs hover:bg-gray-50"
+                                    :class="selectedStyle === 'data' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'"
+                                    @click="selectedStyle = 'data'">
+                                📊 Data-Heavy
+                            </button>
+                            <button class="p-2 border rounded-lg text-xs hover:bg-gray-50"
+                                    :class="selectedStyle === 'minimal' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'"
+                                    @click="selectedStyle = 'minimal'">
+                                ✨ Minimal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="glass-effect rounded-xl p-6">
+                    <h3 class="font-medium text-gray-900 mb-4">⚡ Quick Actions</h3>
+                    <div class="space-y-2">
+                        <button class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors text-sm">
+                            📁 Upload References
+                        </button>
+                        <button class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                            🎯 Auto-Train Model
+                        </button>
+                        <button class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                            🔄 Batch Generate
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generation & Preview Panel -->
+            <div class="lg:col-span-2">
+                <div class="glass-effect rounded-xl p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">🎨 Generate Thumbnail</h2>
+                    
+                    <!-- Title Input -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Video Title</label>
+                        <input type="text" x-model="videoTitle" 
+                               placeholder="Why Bitcoin Will Hit $200K in 2024"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <!-- Generation Settings -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Style</label>
+                            <select x-model="thumbnailStyle" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="finance-pro">Finance-Pro</option>
+                                <option value="crypto-bold">Crypto-Bold</option>
+                                <option value="minimalist">Minimalist</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Character</label>
+                            <select x-model="characterType" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="none">None</option>
+                                <option value="financial-expert">Financial Expert</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Layout</label>
+                            <select x-model="layoutType" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="split">Split Layout</option>
+                                <option value="overlay">Text Overlay</option>
+                                <option value="sidebar">Side Text</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options -->
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                        <h4 class="font-medium text-gray-900 mb-3">🔧 Advanced Options</h4>
+                        <div class="space-y-3">
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="useCustomPrompt" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700">Use Custom Prompt</span>
+                            </label>
+                            <div x-show="useCustomPrompt">
+                                <textarea x-model="customPrompt" rows="3" 
+                                          placeholder="Professional financial thumbnail with bold red arrow pointing up, crypto symbols in background..."
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></textarea>
+                            </div>
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="maintainBranding" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700">Maintain Series Branding</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Generate Button -->
+                    <button @click="generateThumbnail()" 
+                            :disabled="!videoTitle || isGenerating"
+                            :class="(!videoTitle || isGenerating) ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'"
+                            class="w-full py-3 text-white font-semibold rounded-lg transition-all">
+                        <span x-show="!isGenerating">🎨 Generate Thumbnail</span>
+                        <span x-show="isGenerating">⏳ Creating magic...</span>
+                    </button>
+                </div>
+
+                <!-- Preview Area -->
+                <div class="glass-effect rounded-xl p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">👁️ Live Preview</h2>
+                    
+                    <div x-show="!generatedThumbnail" class="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center mb-4">
+                        <div class="text-center">
+                            <span class="text-6xl mb-4 block">🎨</span>
+                            <p class="text-gray-600">Generated thumbnail will appear here</p>
+                        </div>
+                    </div>
+
+                    <div x-show="generatedThumbnail" class="space-y-4">
+                        <!-- Main Preview -->
+                        <div class="gradient-border">
+                            <div class="gradient-border-inner">
+                                <div class="aspect-video bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-black bg-opacity-20"></div>
+                                    <div class="relative z-10 text-center text-white">
+                                        <h3 class="text-xl font-bold mb-2" x-text="videoTitle"></h3>
+                                        <div class="flex items-center justify-center space-x-4">
+                                            <span class="text-3xl">📈</span>
+                                            <span class="text-2xl font-bold">$200K</span>
+                                            <span class="text-3xl">₿</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Variations -->
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="aspect-video bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">
+                                Variation 1
+                            </div>
+                            <div class="aspect-video bg-gradient-to-r from-yellow-400 to-red-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">
+                                Variation 2
+                            </div>
+                            <div class="aspect-video bg-gradient-to-r from-purple-400 to-pink-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">
+                                Variation 3
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex space-x-3">
+                            <button class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                                ✅ Approve & Use
+                            </button>
+                            <button class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                                🔄 Generate More
+                            </button>
+                            <button class="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors">
+                                💾 Save Draft
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Thumbnails -->
+        <div class="mt-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">🎨 Recent Creations</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div class="group relative">
+                    <div class="aspect-video bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg"></div>
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-lg flex items-center justify-center">
+                        <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="bg-white text-gray-900 px-3 py-1 rounded text-xs mr-2">Edit</button>
+                            <button class="bg-indigo-600 text-white px-3 py-1 rounded text-xs">Use</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Repeat for more thumbnails -->
+                <div class="group relative">
+                    <div class="aspect-video bg-gradient-to-br from-green-500 to-blue-600 rounded-lg"></div>
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-lg flex items-center justify-center">
+                        <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="bg-white text-gray-900 px-3 py-1 rounded text-xs mr-2">Edit</button>
+                            <button class="bg-indigo-600 text-white px-3 py-1 rounded text-xs">Use</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function thumbnailStudio() {
+            return {
+                selectedProject: '',
+                selectedSeries: '',
+                selectedTheme: '',
+                selectedStyle: 'professional',
+                videoTitle: '',
+                thumbnailStyle: 'finance-pro',
+                characterType: 'financial-expert',
+                layoutType: 'split',
+                useCustomPrompt: false,
+                customPrompt: '',
+                maintainBranding: true,
+                isGenerating: false,
+                generatedThumbnail: false,
+                
+                loadSeries() {
+                    // Load series for selected project
+                },
+                
+                loadThemes() {
+                    // Load themes for selected series
+                },
+                
+                async generateThumbnail() {
+                    this.isGenerating = true;
+                    
+                    // Simulate generation
+                    setTimeout(() => {
+                        this.generatedThumbnail = true;
+                        this.isGenerating = false;
+                    }, 3000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

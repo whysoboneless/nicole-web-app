@@ -1,0 +1,383 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Affiliate Program - Nicole AI{% endblock %}
+
+{% block page_title %}Affiliate Program{% endblock %}
+{% block page_description %}Earn commissions by referring creators to Nicole AI{% endblock %}
+
+{% block content %}
+<div x-data="affiliatePage()">
+    <!-- Hero Section -->
+    <div class="glass-effect rounded-xl p-8 mb-8 text-center">
+        <h2 class="text-4xl font-bold text-gray-900 mb-4">🤝 Join Our Affiliate Program</h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-6">
+            Earn 30% recurring commissions by helping creators automate their YouTube success
+        </p>
+        <button @click="currentTab = 'apply'" 
+                class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all">
+            Apply Now
+        </button>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="flex border-b border-gray-200 mb-8">
+        <button @click="currentTab = 'overview'" 
+                :class="currentTab === 'overview' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500'"
+                class="py-2 px-6 border-b-2 font-medium transition-colors">
+            Program Overview
+        </button>
+        <button @click="currentTab = 'dashboard'" 
+                :class="currentTab === 'dashboard' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500'"
+                class="py-2 px-6 border-b-2 font-medium transition-colors">
+            Affiliate Dashboard
+        </button>
+        <button @click="currentTab = 'resources'" 
+                :class="currentTab === 'resources' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500'"
+                class="py-2 px-6 border-b-2 font-medium transition-colors">
+            Marketing Resources
+        </button>
+        <button @click="currentTab = 'apply'" 
+                :class="currentTab === 'apply' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500'"
+                class="py-2 px-6 border-b-2 font-medium transition-colors">
+            Apply
+        </button>
+    </div>
+
+    <!-- Program Overview -->
+    <div x-show="currentTab === 'overview'">
+        <!-- Commission Structure -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass-effect rounded-xl p-6 text-center">
+                <div class="text-3xl mb-3">💰</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">30% Commission</h3>
+                <p class="text-gray-600">Recurring monthly commissions on all plans</p>
+            </div>
+            <div class="glass-effect rounded-xl p-6 text-center">
+                <div class="text-3xl mb-3">🎯</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Easy Conversions</h3>
+                <p class="text-gray-600">High-converting product that sells itself</p>
+            </div>
+            <div class="glass-effect rounded-xl p-6 text-center">
+                <div class="text-3xl mb-3">📊</div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Real-time Tracking</h3>
+                <p class="text-gray-600">Monitor clicks, conversions, and earnings</p>
+            </div>
+        </div>
+
+        <!-- Benefits -->
+        <div class="glass-effect rounded-xl p-6 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-6">Why Join Our Program?</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                            <span class="text-green-600 text-sm">✓</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900">High-Ticket Product</h4>
+                            <p class="text-gray-600 text-sm">Plans start at $97/month with enterprise options up to $997/month</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                            <span class="text-green-600 text-sm">✓</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900">Recurring Revenue</h4>
+                            <p class="text-gray-600 text-sm">Get paid every month for as long as your referrals stay subscribed</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                            <span class="text-green-600 text-sm">✓</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900">Hot Market</h4>
+                            <p class="text-gray-600 text-sm">YouTube automation is exploding - creators are actively looking for solutions</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                            <span class="text-green-600 text-sm">✓</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900">Marketing Support</h4>
+                            <p class="text-gray-600 text-sm">Professional banners, videos, email sequences, and landing pages</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                            <span class="text-green-600 text-sm">✓</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900">Fast Payouts</h4>
+                            <p class="text-gray-600 text-sm">Monthly payments via PayPal or direct deposit with detailed reporting</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                            <span class="text-green-600 text-sm">✓</span>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900">Dedicated Support</h4>
+                            <p class="text-gray-600 text-sm">Personal affiliate manager to help maximize your earnings</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Earning Potential -->
+        <div class="glass-effect rounded-xl p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-6">💸 Earning Potential</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 text-center">
+                    <h4 class="font-bold text-green-900 mb-2">Starter</h4>
+                    <p class="text-2xl font-bold text-green-700 mb-2">$873/month</p>
+                    <p class="text-sm text-green-600">10 referrals on Pro plan</p>
+                </div>
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 text-center">
+                    <h4 class="font-bold text-blue-900 mb-2">Growth</h4>
+                    <p class="text-2xl font-bold text-blue-700 mb-2">$2,619/month</p>
+                    <p class="text-sm text-blue-600">30 referrals mixed plans</p>
+                </div>
+                <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6 text-center">
+                    <h4 class="font-bold text-purple-900 mb-2">Elite</h4>
+                    <p class="text-2xl font-bold text-purple-700 mb-2">$8,970/month</p>
+                    <p class="text-sm text-purple-600">100+ referrals + enterprise</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Affiliate Dashboard -->
+    <div x-show="currentTab === 'dashboard'">
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass-effect rounded-xl p-6">
+                <h4 class="text-sm font-medium text-gray-600 mb-2">Total Earnings</h4>
+                <p class="text-2xl font-bold text-green-600">$2,847</p>
+                <p class="text-sm text-gray-500">+22% this month</p>
+            </div>
+            <div class="glass-effect rounded-xl p-6">
+                <h4 class="text-sm font-medium text-gray-600 mb-2">Active Referrals</h4>
+                <p class="text-2xl font-bold text-blue-600">23</p>
+                <p class="text-sm text-gray-500">+3 this month</p>
+            </div>
+            <div class="glass-effect rounded-xl p-6">
+                <h4 class="text-sm font-medium text-gray-600 mb-2">Conversion Rate</h4>
+                <p class="text-2xl font-bold text-purple-600">12.4%</p>
+                <p class="text-sm text-gray-500">Above average</p>
+            </div>
+            <div class="glass-effect rounded-xl p-6">
+                <h4 class="text-sm font-medium text-gray-600 mb-2">Next Payout</h4>
+                <p class="text-2xl font-bold text-orange-600">$451</p>
+                <p class="text-sm text-gray-500">March 1st</p>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="glass-effect rounded-xl p-6 mb-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-gray-900 mb-2">Your Affiliate Link</h4>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" value="https://nicole.ai/?ref=your-code" 
+                               class="flex-1 bg-white border border-gray-300 rounded px-3 py-2 text-sm" readonly>
+                        <button @click="copyLink()" class="bg-indigo-600 text-white px-3 py-2 rounded text-sm hover:bg-indigo-700">
+                            Copy
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-gray-900 mb-2">Coupon Code</h4>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" value="SAVE30-YOURCODE" 
+                               class="flex-1 bg-white border border-gray-300 rounded px-3 py-2 text-sm" readonly>
+                        <button @click="copyCoupon()" class="bg-purple-600 text-white px-3 py-2 rounded text-sm hover:bg-purple-700">
+                            Copy
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-gray-900 mb-2">Generate Links</h4>
+                    <button @click="generateLink()" class="w-full bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700">
+                        Create Custom Link
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="glass-effect rounded-xl p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Recent Activity</h3>
+            <div class="space-y-4">
+                <template x-for="activity in recentActivity" :key="activity.id">
+                    <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                        <div class="flex items-center space-x-3">
+                            <div :class="getActivityIcon(activity.type)" class="w-8 h-8 rounded-full flex items-center justify-center">
+                                <span class="text-sm" x-text="activity.icon"></span>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900" x-text="activity.description"></p>
+                                <p class="text-sm text-gray-500" x-text="activity.date"></p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p :class="activity.amount > 0 ? 'text-green-600' : 'text-gray-600'" 
+                               class="font-semibold" x-text="activity.amount > 0 ? '+$' + activity.amount : ''"></p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Marketing Resources -->
+    <div x-show="currentTab === 'resources'">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <template x-for="resource in marketingResources" :key="resource.id">
+                <div class="glass-effect rounded-xl p-6">
+                    <div class="text-3xl mb-4" x-text="resource.icon"></div>
+                    <h4 class="font-bold text-gray-900 mb-2" x-text="resource.title"></h4>
+                    <p class="text-gray-600 text-sm mb-4" x-text="resource.description"></p>
+                    <button @click="downloadResource(resource)" 
+                            class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors">
+                        Download
+                    </button>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Application Form -->
+    <div x-show="currentTab === 'apply'">
+        <div class="max-w-2xl mx-auto">
+            <div class="glass-effect rounded-xl p-8">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6 text-center">Apply to Become an Affiliate</h3>
+                <form @submit.prevent="submitApplication()">
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                                <input type="text" x-model="application.firstName" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                                <input type="text" x-model="application.lastName" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                            <input type="email" x-model="application.email" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Website/Social Media</label>
+                            <input type="url" x-model="application.website" 
+                                   placeholder="https://yourwebsite.com or social media link"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">How will you promote Nicole AI?</label>
+                            <textarea x-model="application.promotionMethod" rows="4" required
+                                      placeholder="Describe your marketing strategy, audience, and promotional methods..."
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Estimated monthly traffic/audience</label>
+                            <select x-model="application.audienceSize" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Select range</option>
+                                <option value="<1k">Less than 1,000</option>
+                                <option value="1k-10k">1,000 - 10,000</option>
+                                <option value="10k-50k">10,000 - 50,000</option>
+                                <option value="50k-100k">50,000 - 100,000</option>
+                                <option value="100k+">100,000+</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" 
+                                class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-6 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all">
+                            Submit Application
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function affiliatePage() {
+    return {
+        currentTab: 'overview',
+        
+        application: {
+            firstName: '',
+            lastName: '',
+            email: '',
+            website: '',
+            promotionMethod: '',
+            audienceSize: ''
+        },
+        
+        recentActivity: [
+            { id: 1, type: 'conversion', icon: '💰', description: 'New referral converted to Pro plan', amount: 29.10, date: 'Feb 28, 2024' },
+            { id: 2, type: 'click', icon: '👆', description: 'Affiliate link clicked (15 times)', amount: 0, date: 'Feb 27, 2024' },
+            { id: 3, type: 'payout', icon: '💸', description: 'Monthly payout processed', amount: 0, date: 'Feb 1, 2024' },
+            { id: 4, type: 'conversion', icon: '💰', description: 'Referral upgraded to Enterprise', amount: 89.70, date: 'Jan 30, 2024' }
+        ],
+        
+        marketingResources: [
+            { id: 1, icon: '🎨', title: 'Banner Pack', description: 'High-converting banners in multiple sizes for websites and social media' },
+            { id: 2, icon: '📹', title: 'Demo Videos', description: 'Professional product demo videos to showcase Nicole AI features' },
+            { id: 3, icon: '📧', title: 'Email Templates', description: 'Proven email sequences for promoting to your audience' },
+            { id: 4, icon: '📄', title: 'Landing Pages', description: 'Custom landing pages optimized for your affiliate campaigns' },
+            { id: 5, icon: '📊', title: 'Case Studies', description: 'Success stories and case studies to build credibility' },
+            { id: 6, icon: '💬', title: 'Social Media Kit', description: 'Ready-to-use posts, stories, and captions for all platforms' }
+        ],
+        
+        getActivityIcon(type) {
+            const colors = {
+                'conversion': 'bg-green-100 text-green-600',
+                'click': 'bg-blue-100 text-blue-600',
+                'payout': 'bg-purple-100 text-purple-600'
+            };
+            return colors[type] || 'bg-gray-100 text-gray-600';
+        },
+        
+        copyLink() {
+            navigator.clipboard.writeText('https://nicole.ai/?ref=your-code');
+            alert('Affiliate link copied to clipboard!');
+        },
+        
+        copyCoupon() {
+            navigator.clipboard.writeText('SAVE30-YOURCODE');
+            alert('Coupon code copied to clipboard!');
+        },
+        
+        generateLink() {
+            alert('Custom link generator would open here');
+        },
+        
+        downloadResource(resource) {
+            alert(`Downloading ${resource.title}...`);
+        },
+        
+        submitApplication() {
+            alert('Application submitted! We\'ll review it within 24 hours and send you an email.');
+        }
+    }
+}
+</script>
+{% endblock %}

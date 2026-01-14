@@ -1,0 +1,322 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Projects - Nicole AI{% endblock %}
+{% block page_title %}My Projects{% endblock %}
+{% block page_description %}Manage your competitive intelligence projects{% endblock %}
+
+{% block extra_head %}
+<style>
+    .project-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .project-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+    .project-selected { 
+        ring: 2px; 
+        ring-color: #667eea; 
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(168, 85, 247, 0.1));
+    }
+    .status-badge { 
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; 
+    }
+    .metric-card:hover { transform: scale(1.05); }
+</style>
+{% endblock %}
+
+{% block top_actions %}
+<a href="{{ url_for('dashboard.create_group') }}" 
+   class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition-all">
+    + New Project
+</a>
+{% endblock %}
+
+{% block content %}
+<div x-data="projectManager()" x-init="init()">
+    <!-- Project Selection Notice -->
+    <div class="glass-effect rounded-xl p-4 mb-6 border-l-4 border-blue-500 bg-blue-50">
+        <div class="flex items-center space-x-3">
+            <span class="text-blue-500 text-xl">💡</span>
+            <div>
+                <h3 class="font-medium text-blue-800">Project-Based Workflow</h3>
+                <p class="text-sm text-blue-700">Select a project below to access Trend Discovery, Content Creation, and other tools with that project's data.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Selected Project Bar -->
+    <div x-show="selectedProject" class="glass-effect rounded-xl p-4 mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <span class="text-green-600 font-bold" x-text="selectedProject ? selectedProject.name.charAt(0) : ''"></span>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-green-800">Selected Project</h3>
+                    <p class="text-sm text-green-700" x-text="selectedProject ? selectedProject.name : ''"></p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <a :href="'/tools/trend_discovery?group_id=' + (selectedProject ? selectedProject._id : '')"
+                   class="bg-green-600 text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
+                    📈 Discover Trends
+                </a>
+                <a :href="'/tools/content_creation?group_id=' + (selectedProject ? selectedProject._id : '')"
+                   class="bg-blue-600 text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    ✏️ Create Content
+                </a>
+                <button @click="selectedProject = null" 
+                        class="text-gray-500 hover:text-gray-700 p-1">
+                    ✕
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {% if user_groups %}
+    <!-- Projects Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {% for group in user_groups %}
+        <div class="glass-effect rounded-xl overflow-hidden project-card cursor-pointer"
+             :class="selectedProject && selectedProject._id === '{{ group._id }}' ? 'project-selected ring-2 ring-indigo-500' : ''"
+             @click="selectProject({
+                 _id: '{{ group._id }}',
+                 name: '{{ group.name or "Unnamed Project" }}',
+                 created_at: '{{ group.created_at.strftime("%b %d, %Y") if group.created_at else "Unknown" }}',
+                 is_public: {{ group.is_public|lower }},
+                 competitors: {{ group.competitor_channels|length if group.competitor_channels else 0 }},
+                 videos: {{ group.analyzed_videos|length if group.analyzed_videos else 0 }}
+             })">
+            
+            <!-- Project Header -->
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+                <div class="relative">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xl font-bold truncate">{{ group.name or "Unnamed Project" }}</h3>
+                        <div class="flex items-center space-x-1">
+                            {% if group.is_public %}
+                            <span class="px-2 py-1 bg-white/20 rounded-full text-xs">🌐 Public</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-white/20 rounded-full text-xs">🔒 Private</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <p class="text-indigo-100 text-sm">Created {{ group.created_at.strftime('%b %d, %Y') if group.created_at else 'Unknown' }}</p>
+                </div>
+            </div>
+
+            <!-- Project Metrics -->
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="text-center p-3 bg-gray-50 rounded-lg metric-card transition-transform">
+                        <p class="text-2xl font-bold text-indigo-600">{{ group.competitor_count if group.competitor_count is defined else 0 }}</p>
+                        <p class="text-xs text-gray-600">Competitors</p>
+                    </div>
+                    <div class="text-center p-3 bg-gray-50 rounded-lg metric-card transition-transform">
+                        <p class="text-2xl font-bold text-purple-600">{{ group.video_count if group.video_count is defined else 0 }}</p>
+                        <p class="text-xs text-gray-600">Videos</p>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="space-y-2">
+                    <button @click.stop="selectProject({
+                        _id: '{{ group._id }}',
+                        name: '{{ group.name or "Unnamed Project" }}',
+                        created_at: '{{ group.created_at.strftime("%b %d, %Y") if group.created_at else "Unknown" }}',
+                        is_public: {{ group.is_public|lower }},
+                        competitors: {{ group.competitor_count if group.competitor_count is defined else 0 }},
+                        videos: {{ group.video_count if group.video_count is defined else 0 }}
+                    })" 
+                            :class="selectedProject && selectedProject._id === '{{ group._id }}' ? 'bg-green-600 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700'"
+                            class="w-full py-2 px-4 rounded-lg font-medium transition-colors">
+                        <span x-show="!(selectedProject && selectedProject._id === '{{ group._id }}')">📋 Select Project</span>
+                        <span x-show="selectedProject && selectedProject._id === '{{ group._id }}'">✅ Selected</span>
+                    </button>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <a href="{{ url_for('dashboard.competitor_selection') }}?group_id={{ group._id }}" 
+                           @click.stop=""
+                           class="text-center py-2 px-3 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium hover:bg-orange-200 transition-colors">
+                            ✏️ Edit Group
+                        </a>
+                        <button @click.stop="removeGroup('{{ group._id }}', '{{ group.name or "Unnamed Project" }}')"
+                                class="text-center py-2 px-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors">
+                            🗑️ Remove
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="glass-effect rounded-xl p-6 text-center">
+            <div class="w-12 h-12 bg-indigo-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
+                <span class="text-2xl">📊</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900">{{ user_groups|length }}</p>
+            <p class="text-sm text-gray-600">Total Projects</p>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 text-center">
+            <div class="w-12 h-12 bg-green-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
+                <span class="text-2xl">🎯</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900">{{ user_groups|selectattr('competitor_channels')|map(attribute='competitor_channels')|map('length')|sum }}</p>
+            <p class="text-sm text-gray-600">Competitors Tracked</p>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 text-center">
+            <div class="w-12 h-12 bg-purple-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
+                <span class="text-2xl">🎬</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900">{{ user_groups|selectattr('analyzed_videos')|map(attribute='analyzed_videos')|map('length')|sum }}</p>
+            <p class="text-sm text-gray-600">Videos Analyzed</p>
+        </div>
+        
+        <div class="glass-effect rounded-xl p-6 text-center">
+            <div class="w-12 h-12 bg-yellow-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
+                <span class="text-2xl">🔥</span>
+            </div>
+            <p class="text-2xl font-bold text-gray-900">{{ user_groups|selectattr('is_public', 'equalto', false)|list|length }}</p>
+            <p class="text-sm text-gray-600">Private Projects</p>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="glass-effect rounded-xl p-12 text-center">
+        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <span class="text-4xl">🎯</span>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">No Projects Yet</h3>
+        <p class="text-gray-600 mb-6 max-w-md mx-auto">
+            Create your first competitive intelligence project to start automating your content creation!
+        </p>
+        <a href="{{ url_for('dashboard.create_group') }}" 
+           class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all">
+            🚀 Create First Project
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="glass-effect rounded-xl p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">⚡ Quick Actions</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="{{ url_for('dashboard.create_group') }}" 
+               class="flex items-center space-x-3 p-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all">
+                <span class="text-2xl">➕</span>
+                <div>
+                    <h4 class="font-medium">Create Project</h4>
+                    <p class="text-sm text-green-100">Start new competitive intelligence</p>
+                </div>
+            </a>
+            
+            <a href="{{ url_for('dashboard.available_groups') }}" 
+               class="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all">
+                <span class="text-2xl">🏪</span>
+                <div>
+                    <h4 class="font-medium">Browse Marketplace</h4>
+                    <p class="text-sm text-blue-100">Get pre-built projects</p>
+                </div>
+            </a>
+            
+            <a href="/discover" 
+               class="flex items-center space-x-3 p-4 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all">
+                <span class="text-2xl">🔍</span>
+                <div>
+                    <h4 class="font-medium">Discover Channels</h4>
+                    <p class="text-sm text-purple-100">Find new opportunities</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function projectManager() {
+    return {
+        selectedProject: null,
+        
+        init() {
+            // Load selected project from localStorage if exists
+            const saved = localStorage.getItem('selectedProject');
+            if (saved) {
+                this.selectedProject = JSON.parse(saved);
+            }
+        },
+        
+        selectProject(project) {
+            this.selectedProject = project;
+            localStorage.setItem('selectedProject', JSON.stringify(project));
+            
+            // Update global state for other pages to use
+            window.dispatchEvent(new CustomEvent('projectSelected', { 
+                detail: { project: project }
+            }));
+            
+            // Flash message
+            this.showSuccessMessage(`"${project.name}" selected! You can now access tools with this project's data.`);
+        },
+        
+        showSuccessMessage(message) {
+            // Create a temporary success message
+            const alert = document.createElement('div');
+            alert.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300';
+            alert.textContent = message;
+            document.body.appendChild(alert);
+            
+            // Animate in
+            setTimeout(() => alert.classList.add('translate-x-0'), 100);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                alert.classList.add('translate-x-full');
+                setTimeout(() => document.body.removeChild(alert), 300);
+            }, 3000);
+        },
+
+        removeGroup(groupId, groupName) {
+            // First confirmation
+            if (!confirm(`⚠️ PERMANENT DELETION WARNING ⚠️\n\nAre you sure you want to delete the group "${groupName}"?\n\nThis will permanently remove:\n• The entire group\n• All competitors\n• All series data\n• All themes data\n\nThis action CANNOT be undone!`)) {
+                return;
+            }
+            
+            // Second confirmation - require typing "DELETE"
+            const confirmation = prompt(`⚠️ FINAL CONFIRMATION ⚠️\n\nTo confirm deletion of "${groupName}", type exactly:\n\nDELETE\n\nThis will permanently delete the group and all its data.`);
+            
+            if (confirmation === "DELETE") {
+                console.log(`🗑️ Deleting group ${groupId} (${groupName})`);
+                
+                fetch('/api/remove-group', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        group_id: groupId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        this.showSuccessMessage(`Group "${groupName}" deleted successfully!`);
+                        // Reload the page to refresh the group list
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else {
+                        alert(`Error deleting group: ${data.error}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting group. Please try again.');
+                });
+            } else if (confirmation !== null) {
+                alert('Deletion cancelled. You must type "DELETE" exactly to confirm.');
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

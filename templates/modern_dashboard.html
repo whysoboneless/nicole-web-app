@@ -1,0 +1,296 @@
+{% extends "modern_base.html" %}
+
+{% block title %}Dashboard - Nicole AI{% endblock %}
+{% block page_title %}Empire Dashboard{% endblock %}
+{% block page_description %}Welcome back, {{ current_user.username }}! Your automation empire awaits.{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .stat-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+    .empire-glow { 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-size: 200% 200%;
+        animation: empireGlow 4s ease-in-out infinite;
+    }
+    @keyframes empireGlow {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+    .activity-item { border-left: 3px solid transparent; transition: all 0.2s ease; }
+    .activity-item:hover { border-left-color: #667eea; background: rgba(102, 126, 234, 0.05); }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Empire Stats -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="glass-effect rounded-xl p-6 card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Projects</p>
+                <p class="text-3xl font-bold text-indigo-600">{{ stats.total_groups }}</p>
+                <p class="text-xs text-green-600">+2 this month</p>
+            </div>
+            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <span class="text-2xl">📊</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="glass-effect rounded-xl p-6 card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Owned Projects</p>
+                <p class="text-3xl font-bold text-purple-600">{{ stats.owned_groups }}</p>
+                <p class="text-xs text-purple-600">You control</p>
+            </div>
+            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <span class="text-2xl">👑</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="glass-effect rounded-xl p-6 card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Marketplace Access</p>
+                <p class="text-3xl font-bold text-green-600">{{ stats.available_groups }}</p>
+                <p class="text-xs text-green-600">Premium groups</p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <span class="text-2xl">🏪</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="glass-effect rounded-xl p-6 card-hover">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Empire Status</p>
+                <p class="text-3xl font-bold text-blue-600">Growing</p>
+                <p class="text-xs text-blue-600">All systems active</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <span class="text-2xl">🚀</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Welcome Section -->
+<div class="glass-effect rounded-xl p-8 mb-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-4xl font-black mb-2 text-gray-900">
+                Welcome back, {{ current_user.username }}! 
+                {% if current_user.is_admin %}<span class="text-yellow-600">👑</span>{% endif %}
+            </h1>
+            <p class="text-xl text-gray-700 mb-4">Your AI-powered automation empire for YouTube domination</p>
+            <div class="flex items-center space-x-4">
+                <span class="px-3 py-1 bg-green-100 rounded-full text-sm text-green-700">🟢 All Systems Active</span>
+                {% if current_user.is_admin %}
+                <span class="px-3 py-1 bg-yellow-100 rounded-full text-sm text-yellow-700">👑 Admin Access</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="hidden lg:block">
+            <div class="w-32 h-32 bg-white/10 rounded-2xl flex items-center justify-center">
+                <span class="text-6xl">🏰</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Main Content Area -->
+    <div class="lg:col-span-2 space-y-8">
+        <!-- Quick Actions -->
+        <div class="glass-effect rounded-xl p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">⚡ Quick Actions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <a href="{{ url_for('dashboard.create_group') }}" 
+                   class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6 rounded-xl card-hover group">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-semibold text-lg mb-1">Create Project</h3>
+                            <p class="text-green-100 text-sm">Start new competitive intelligence</p>
+                        </div>
+                        <span class="text-3xl group-hover:scale-110 transition-transform">➕</span>
+                    </div>
+                </a>
+                
+                <a href="/discover" 
+                   class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-xl card-hover group">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-semibold text-lg mb-1">Discover Channels</h3>
+                            <p class="text-blue-100 text-sm">Find profitable opportunities</p>
+                        </div>
+                        <span class="text-3xl group-hover:scale-110 transition-transform">🔍</span>
+                    </div>
+                </a>
+                
+                <a href="/campaigns" 
+                   class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-xl card-hover group">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-semibold text-lg mb-1">Launch Automation</h3>
+                            <p class="text-purple-100 text-sm">Set up mass production</p>
+                        </div>
+                        <span class="text-3xl group-hover:scale-110 transition-transform">🤖</span>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('dashboard.api_keys') }}" 
+                   class="bg-gradient-to-r from-yellow-500 to-orange-600 text-white p-6 rounded-xl card-hover group">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-semibold text-lg mb-1">API Settings</h3>
+                            <p class="text-yellow-100 text-sm">Configure your keys</p>
+                        </div>
+                        <span class="text-3xl group-hover:scale-110 transition-transform">🔑</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Projects -->
+        {% if user_groups %}
+        <div class="glass-effect rounded-xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">🎯 Your Projects</h2>
+                <a href="{{ url_for('dashboard.my_groups') }}" class="text-indigo-600 hover:text-indigo-700 font-medium">
+                    View All →
+                </a>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for group in user_groups[:4] %}
+                <div class="border border-gray-200 rounded-xl p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold text-gray-900">
+                            <a href="{{ url_for('dashboard.view_group', group_id=group._id) }}" class="hover:text-indigo-600">
+                                {{ group.name or "Unnamed Project" }}
+                            </a>
+                        </h3>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium {% if group.is_public %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                            {{ 'Public' if group.is_public else 'Private' }}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-4">
+                        <div>
+                            <span class="block font-medium">Created</span>
+                            <span>{{ group.created_at.strftime('%Y-%m-%d') if group.created_at else 'Unknown' }}</span>
+                        </div>
+                        <div>
+                            <span class="block font-medium">Members</span>
+                            <span>{{ group.members|length if group.members else '1' }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <a href="{{ url_for('dashboard.trend_discovery', group_id=group._id) }}" 
+                           class="flex-1 bg-indigo-100 text-indigo-700 py-2 px-3 rounded-lg text-center text-sm font-medium hover:bg-indigo-200 transition-colors">
+                            📈 Trends
+                        </a>
+                        <a href="{{ url_for('dashboard.view_group', group_id=group._id) }}" 
+                           class="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-center text-sm font-medium hover:bg-gray-200 transition-colors">
+                            👁️ View
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="glass-effect rounded-xl p-12 text-center">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span class="text-4xl">🎯</span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">No Projects Yet</h3>
+            <p class="text-gray-600 mb-6 max-w-md mx-auto">
+                Create your first competitive intelligence project to start automating your content creation!
+            </p>
+            <a href="{{ url_for('dashboard.create_group') }}" 
+               class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all">
+                🚀 Create First Project
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <!-- Nicole AI Tools -->
+        <div class="glass-effect rounded-xl p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">🛠️ AI Tools</h3>
+            <div class="space-y-3">
+                <a href="{{ url_for('dashboard.content_creation') }}" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">✏️</span>
+                    <div>
+                        <p class="font-medium text-gray-900">Content Studio</p>
+                        <p class="text-xs text-gray-600">Manual content creation</p>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('dashboard.thumbnail_designer') }}" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span class="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">🎨</span>
+                    <div>
+                        <p class="font-medium text-gray-900">Thumbnail Studio</p>
+                        <p class="text-xs text-gray-600">AI thumbnail generation</p>
+                    </div>
+                </a>
+                
+                <a href="{{ url_for('dashboard.mass_production') }}" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">🏭</span>
+                    <div>
+                        <p class="font-medium text-gray-900">Mass Production</p>
+                        <p class="text-xs text-gray-600">Bulk automation</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="glass-effect rounded-xl p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">📈 Recent Activity</h3>
+            <div class="space-y-3">
+                <div class="activity-item p-3 rounded-lg">
+                    <p class="font-medium text-gray-900 text-sm">New project created</p>
+                    <p class="text-xs text-gray-600">2 hours ago</p>
+                </div>
+                <div class="activity-item p-3 rounded-lg">
+                    <p class="font-medium text-gray-900 text-sm">Channel analysis completed</p>
+                    <p class="text-xs text-gray-600">5 hours ago</p>
+                </div>
+                <div class="activity-item p-3 rounded-lg">
+                    <p class="font-medium text-gray-900 text-sm">Trend discovery ran</p>
+                    <p class="text-xs text-gray-600">1 day ago</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="glass-effect rounded-xl p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">⚡ Quick Stats</h3>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600">This Month</span>
+                    <span class="font-semibold text-green-600">+{{ stats.total_groups * 15 }}%</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600">Active Projects</span>
+                    <span class="font-semibold text-blue-600">{{ stats.owned_groups }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600">Success Rate</span>
+                    <span class="font-semibold text-purple-600">94%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

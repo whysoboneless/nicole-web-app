@@ -1,0 +1,69 @@
+<div class="sidebar bg-light border-end" style="height: calc(100vh - 76px); position: sticky; top: 76px;">
+    <div class="p-3">
+        <h6 class="sidebar-heading text-muted text-uppercase fw-bold mb-3">
+            <i class="fas fa-home me-2"></i>Main
+        </h6>
+        <ul class="nav nav-pills flex-column mb-4">
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if request.endpoint == 'dashboard.main' else '' }}" 
+                   href="{{ url_for('dashboard.main') }}">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if request.endpoint == 'dashboard.my_groups' else '' }}" 
+                   href="{{ url_for('dashboard.my_groups') }}">
+                    <i class="fas fa-folder me-2"></i>My Groups
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if request.endpoint == 'dashboard.available_groups' else '' }}" 
+                   href="{{ url_for('dashboard.available_groups') }}">
+                    <i class="fas fa-globe me-2"></i>Available Groups
+                </a>
+            </li>
+        </ul>
+
+        <h6 class="sidebar-heading text-muted text-uppercase fw-bold mb-3">
+            <i class="fas fa-cogs me-2"></i>Nicole Modules
+        </h6>
+        <ul class="nav nav-pills flex-column mb-4">
+            <li class="nav-item">
+                <a class="nav-link" href="/channel_discovery">
+                    <i class="fas fa-search me-2"></i>Channel Discovery
+                    <span class="badge bg-success ms-auto">Live</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-muted" href="#" onclick="return false;">
+                    <i class="fas fa-chart-line me-2"></i>Analysis
+                    <span class="badge bg-secondary ms-auto">Soon</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-muted" href="#" onclick="return false;">
+                    <i class="fas fa-trending-up me-2"></i>Trends
+                    <span class="badge bg-secondary ms-auto">Soon</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-muted" href="#" onclick="return false;">
+                    <i class="fas fa-video me-2"></i>Production
+                    <span class="badge bg-secondary ms-auto">Soon</span>
+                </a>
+            </li>
+        </ul>
+
+        <h6 class="sidebar-heading text-muted text-uppercase fw-bold mb-3">
+            <i class="fas fa-user me-2"></i>Settings
+        </h6>
+        <ul class="nav nav-pills flex-column">
+            <li class="nav-item">
+                <a class="nav-link {{ 'active' if request.endpoint == 'dashboard.api_keys' else '' }}" 
+                   href="{{ url_for('dashboard.api_keys') }}">
+                    <i class="fas fa-key me-2"></i>API Keys
+                </a>
+            </li>
+        </ul>
+    </div>
+</div> 
